@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/platform/trunk/src/Core/System/SystemConfig/Schema/config.xsd">
+    <card>
+        <title>Ginie Chatbot</title>
+        <title lang="de-DE">Ginie Chatbot</title>
+
+        <input-field type="bool">
+            <name>enabled</name>
+            <label>Enable chatbot</label>
+            <label lang="de-DE">Chatbot aktivieren</label>
+            <defaultValue>true</defaultValue>
+        </input-field>
+
+        <input-field type="text">
+            <name>backendUrl</name>
+            <label>Backend chat URL</label>
+            <label lang="de-DE">Backend Chat URL</label>
+            <placeholder>https://your-api-host/chat</placeholder>
+            <required>true</required>
+        </input-field>
+
+        <input-field type="text">
+            <name>botName</name>
+            <label>Bot name</label>
+            <label lang="de-DE">Bot Name</label>
+            <defaultValue>Ginie - Ihr Lizenzassistent</defaultValue>
+        </input-field>
+
+        <input-field type="text">
+            <name>avatarUrl</name>
+            <label>Avatar image URL</label>
+            <label lang="de-DE">Avatar-Bild-URL</label>
+            <defaultValue>https://api.dicebear.com/9.x/bottts/svg?seed=LZD24</defaultValue>
+        </input-field>
+
+        <input-field type="text">
+            <name>greetingDE</name>
+            <label>German greeting</label>
+            <label lang="de-DE">Deutsche Begrüßung</label>
+            <defaultValue>Wir sind online für Sie.</defaultValue>
+        </input-field>
+
+        <input-field type="text">
+            <name>greetingEN</name>
+            <label>English greeting</label>
+            <label lang="de-DE">Englische Begrüßung</label>
+            <defaultValue>We are online for you.</defaultValue>
+        </input-field>
+
+        <input-field type="text">
+            <name>supportEmail</name>
+            <label>Support email</label>
+            <label lang="de-DE">Support E-Mail</label>
+            <defaultValue>support@lizenzdeals24.de</defaultValue>
+        </input-field>
+
+        <input-field type="text">
+            <name>whatsappUrl</name>
+            <label>WhatsApp link</label>
+            <label lang="de-DE">WhatsApp Link</label>
+            <placeholder>https://wa.me/49...</placeholder>
+        </input-field>
+
+        <input-field type="text">
+            <name>primaryColor</name>
+            <label>Primary color</label>
+            <label lang="de-DE">Primärfarbe</label>
+            <defaultValue>#1d4ed8</defaultValue>
+        </input-field>
+
+        <input-field type="text">
+            <name>primaryColorDark</name>
+            <label>Header dark color</label>
+            <label lang="de-DE">Dunkle Kopfzeilenfarbe</label>
+            <defaultValue>#1e40af</defaultValue>
+        </input-field>
+
+        <input-field type="text">
+            <name>defaultLang</name>
+            <label>Default language</label>
+            <label lang="de-DE">Standardsprache</label>
+            <defaultValue>de</defaultValue>
+            <helpText>Use de or en.</helpText>
+            <helpText lang="de-DE">de oder en eintragen.</helpText>
+        </input-field>
+    </card>
+</config>

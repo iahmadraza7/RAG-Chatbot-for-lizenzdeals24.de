@@ -1,0 +1,23 @@
+# Render.com blueprint (free tier). Push the repo, then "New > Blueprint".
+# Set the secret env vars in the Render dashboard (do NOT commit them).
+services:
+  - type: web
+    name: lzd24-chat-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: STORE_API_URL
+        sync: false
+      - key: STORE_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false

@@ -1,0 +1,27 @@
+{
+  "name": "lzd24/chatbot",
+  "description": "Ginie chatbot widget for lizenzdeals24.de storefront.",
+  "type": "shopware-platform-plugin",
+  "license": "proprietary",
+  "version": "1.0.0",
+  "require": {
+    "shopware/core": "~6.5 || ~6.6 || ~6.7",
+    "shopware/storefront": "~6.5 || ~6.6 || ~6.7"
+  },
+  "autoload": {
+    "psr-4": {
+      "Lzd24Chatbot\\": "src/"
+    }
+  },
+  "extra": {
+    "shopware-plugin-class": "Lzd24Chatbot\\Lzd24Chatbot",
+    "label": {
+      "de-DE": "Ginie Chatbot",
+      "en-GB": "Ginie Chatbot"
+    },
+    "description": {
+      "de-DE": "Chatbot Widget für Produktfragen, Deutsch/Englisch und Support-Routing.",
+      "en-GB": "Chatbot widget for product Q&A, German/English and support routing."
+    }
+  }
+}

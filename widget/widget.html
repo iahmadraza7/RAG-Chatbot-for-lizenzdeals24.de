@@ -1,0 +1,35 @@
+<!doctype html>
+<!--
+  Minimal embed example for the LZD24 chat widget.
+  This is all a host page (or Google Tag Manager Custom HTML tag) needs.
+
+  1. (Optional) override config BEFORE the widget script loads.
+  2. Load widget.js with one <script> tag.
+-->
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>LZD24 Widget — Embed Example</title>
+  </head>
+  <body>
+    <h1>Embed example</h1>
+    <p>The chat bubble appears bottom-right.</p>
+
+    <!-- 1) Optional config override -->
+    <script>
+      window.LZD24_CONFIG = {
+        backendUrl: "http://localhost:8000/chat",
+        botName: "Ginie - Ihr Lizenzassistent",
+        greetingDE: "Wir sind online für Sie.",
+        greetingEN: "We are online for you.",
+        supportEmail: "support@lizenzdeals24.de",
+        whatsappUrl: "",
+        // avatarUrl: "https://lizenzdeals24.de/media/lzd24-avatar.png",
+        // primaryColor: "#1d4ed8",
+      };
+    </script>
+
+    <!-- 2) Single-tag load (use the deployed/CDN URL in production) -->
+    <script src="./widget.js" defer></script>
+  </body>
+</html>
