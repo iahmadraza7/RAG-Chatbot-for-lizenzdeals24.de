@@ -41,6 +41,7 @@ Use this if you have the project in GitHub/GitLab.
 
 ```text
 GEMINI_API_KEY=<from backend/.env>
+PYTHON_VERSION=3.12.8
 GEMINI_CHAT_MODEL=gemini-2.5-flash
 GEMINI_EMBED_MODEL=gemini-embedding-001
 GEMINI_EMBED_DIM=768
@@ -557,4 +558,3 @@ Bot routes to support@lizenzdeals24.de and asks not to enter personal data.
   is wrong.
 - If the widget does not appear at all, the plugin/GTM script is not loaded or
   cache is not cleared.
-
