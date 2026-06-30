@@ -31,7 +31,7 @@
             <name>avatarUrl</name>
             <label>Avatar image URL</label>
             <label lang="de-DE">Avatar-Bild-URL</label>
-            <defaultValue>https://api.dicebear.com/9.x/bottts/svg?seed=LZD24</defaultValue>
+            <defaultValue>https://lizenzdeals24.de/bundles/lzd24chatbot/widget/ginie-avatar.png</defaultValue>
         </input-field>
 
         <input-field type="bool">

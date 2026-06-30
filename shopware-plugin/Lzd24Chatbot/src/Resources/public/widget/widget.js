@@ -17,7 +17,7 @@
     {
       backendUrl: "http://localhost:8000/chat",
       botName: "Ginie – Ihr Lizenzassistent",
-      avatarUrl: "https://api.dicebear.com/9.x/bottts/svg?seed=LZD24",
+      avatarUrl: "/bundles/lzd24chatbot/widget/ginie-avatar.png",
       agentAvatarUrl: "",
       useAgentAvatar: false,
       primaryColor: "#1d4ed8",

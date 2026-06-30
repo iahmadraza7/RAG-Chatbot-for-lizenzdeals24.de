@@ -4,11 +4,14 @@
     {{ parent() }}
 
     {% if config('Lzd24Chatbot.config.enabled') %}
+        {% set configuredAvatarUrl = config('Lzd24Chatbot.config.avatarUrl') %}
+        {% set bundledAvatarUrl = asset('bundles/lzd24chatbot/widget/ginie-avatar.png') %}
+        {% set avatarUrl = (configuredAvatarUrl and 'dicebear.com' not in configuredAvatarUrl) ? configuredAvatarUrl : bundledAvatarUrl %}
         <script>
             window.LZD24_CONFIG = Object.assign({}, window.LZD24_CONFIG || {}, {
                 backendUrl: "{{ config('Lzd24Chatbot.config.backendUrl')|e('js') }}",
                 botName: "{{ config('Lzd24Chatbot.config.botName')|e('js') }}",
-                avatarUrl: "{{ config('Lzd24Chatbot.config.avatarUrl')|e('js') }}",
+                avatarUrl: "{{ avatarUrl|e('js') }}",
                 agentAvatarUrl: "{{ config('Lzd24Chatbot.config.agentAvatarUrl')|e('js') }}",
                 useAgentAvatar: {{ config('Lzd24Chatbot.config.useAgentAvatar') ? 'true' : 'false' }},
                 primaryColor: "{{ config('Lzd24Chatbot.config.primaryColor')|e('js') }}",

@@ -164,7 +164,7 @@ Custom HTML tag):
   window.LZD24_CONFIG = {
     backendUrl: "https://your-api-host/chat",   // your deployed FastAPI /chat
     defaultLang: "de",
-    avatarUrl: "https://lizenzdeals24.de/media/lzd24-avatar.png",
+    avatarUrl: "https://lizenzdeals24.de/bundles/lzd24chatbot/widget/ginie-avatar.png",
     agentAvatarUrl: "",
     useAgentAvatar: false,
     primaryColor: "#1d4ed8",

@@ -210,7 +210,7 @@ If there is no direct `Configure` link:
 Enable chatbot: ON
 Backend chat URL: https://YOUR-PUBLIC-BACKEND/chat
 Bot name: Ginie – Ihr Lizenzassistent
-Avatar image URL: paste client avatar URL from Shopware Media
+Avatar image URL: https://lizenzdeals24.de/bundles/lzd24chatbot/widget/ginie-avatar.png
 German greeting: Wir sind online für Sie
 English greeting: We are online for you.
 Support email: support@lizenzdeals24.de
