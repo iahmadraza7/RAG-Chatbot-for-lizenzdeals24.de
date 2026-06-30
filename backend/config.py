@@ -34,7 +34,7 @@ STORE_API_KEY = _env("STORE_API_KEY")
 
 # --- Gemini -----------------------------------------------------------------
 GEMINI_API_KEY = _env("GEMINI_API_KEY")
-GEMINI_CHAT_MODEL = _env("GEMINI_CHAT_MODEL", "gemini-2.0-flash-lite")
+GEMINI_CHAT_MODEL = _env("GEMINI_CHAT_MODEL", "gemini-2.5-flash-lite")
 GEMINI_EMBED_MODEL = _env("GEMINI_EMBED_MODEL", "gemini-embedding-001")
 GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta"
 

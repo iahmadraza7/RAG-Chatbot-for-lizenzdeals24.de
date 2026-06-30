@@ -24,7 +24,7 @@
             <name>botName</name>
             <label>Bot name</label>
             <label lang="de-DE">Bot Name</label>
-            <defaultValue>Ginie - Ihr Lizenzassistent</defaultValue>
+            <defaultValue>Ginie – Ihr Lizenzassistent</defaultValue>
         </input-field>
 
         <input-field type="text">
@@ -34,11 +34,24 @@
             <defaultValue>https://api.dicebear.com/9.x/bottts/svg?seed=LZD24</defaultValue>
         </input-field>
 
+        <input-field type="bool">
+            <name>useAgentAvatar</name>
+            <label>Use headset-agent avatar</label>
+            <label lang="de-DE">Headset-Agent-Avatar nutzen</label>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+        <input-field type="text">
+            <name>agentAvatarUrl</name>
+            <label>Headset-agent image URL</label>
+            <label lang="de-DE">Headset-Agent-Bild-URL</label>
+        </input-field>
+
         <input-field type="text">
             <name>greetingDE</name>
             <label>German greeting</label>
             <label lang="de-DE">Deutsche Begrüßung</label>
-            <defaultValue>Wir sind online für Sie.</defaultValue>
+            <defaultValue>Wir sind online für Sie</defaultValue>
         </input-field>
 
         <input-field type="text">
@@ -63,6 +76,20 @@
         </input-field>
 
         <input-field type="text">
+            <name>telUrl</name>
+            <label>Phone link</label>
+            <label lang="de-DE">Telefon-Link</label>
+            <defaultValue>tel:+4921732643330</defaultValue>
+        </input-field>
+
+        <input-field type="text">
+            <name>contactUrl</name>
+            <label>Contact form URL</label>
+            <label lang="de-DE">Kontaktformular-URL</label>
+            <defaultValue>/kontakt</defaultValue>
+        </input-field>
+
+        <input-field type="text">
             <name>primaryColor</name>
             <label>Primary color</label>
             <label lang="de-DE">Primärfarbe</label>
@@ -73,7 +100,7 @@
             <name>primaryColorDark</name>
             <label>Header dark color</label>
             <label lang="de-DE">Dunkle Kopfzeilenfarbe</label>
-            <defaultValue>#1e40af</defaultValue>
+            <defaultValue>#0f1e3d</defaultValue>
         </input-field>
 
         <input-field type="text">
@@ -83,6 +110,20 @@
             <defaultValue>de</defaultValue>
             <helpText>Use de or en.</helpText>
             <helpText lang="de-DE">de oder en eintragen.</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>offsetBottom</name>
+            <label>Launcher bottom offset</label>
+            <label lang="de-DE">Launcher Abstand unten</label>
+            <defaultValue>96</defaultValue>
+        </input-field>
+
+        <input-field type="int">
+            <name>offsetRight</name>
+            <label>Launcher right offset</label>
+            <label lang="de-DE">Launcher Abstand rechts</label>
+            <defaultValue>20</defaultValue>
         </input-field>
     </card>
 </config>

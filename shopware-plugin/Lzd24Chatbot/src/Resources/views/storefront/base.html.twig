@@ -9,11 +9,17 @@
                 backendUrl: "{{ config('Lzd24Chatbot.config.backendUrl')|e('js') }}",
                 botName: "{{ config('Lzd24Chatbot.config.botName')|e('js') }}",
                 avatarUrl: "{{ config('Lzd24Chatbot.config.avatarUrl')|e('js') }}",
+                agentAvatarUrl: "{{ config('Lzd24Chatbot.config.agentAvatarUrl')|e('js') }}",
+                useAgentAvatar: {{ config('Lzd24Chatbot.config.useAgentAvatar') ? 'true' : 'false' }},
                 primaryColor: "{{ config('Lzd24Chatbot.config.primaryColor')|e('js') }}",
                 primaryColorDark: "{{ config('Lzd24Chatbot.config.primaryColorDark')|e('js') }}",
                 defaultLang: "{{ config('Lzd24Chatbot.config.defaultLang')|e('js') }}",
                 supportEmail: "{{ config('Lzd24Chatbot.config.supportEmail')|e('js') }}",
                 whatsappUrl: "{{ config('Lzd24Chatbot.config.whatsappUrl')|e('js') }}",
+                telUrl: "{{ config('Lzd24Chatbot.config.telUrl')|e('js') }}",
+                contactUrl: "{{ config('Lzd24Chatbot.config.contactUrl')|e('js') }}",
+                offsetBottom: {{ config('Lzd24Chatbot.config.offsetBottom')|default(96) }},
+                offsetRight: {{ config('Lzd24Chatbot.config.offsetRight')|default(20) }},
                 greetingDE: "{{ config('Lzd24Chatbot.config.greetingDE')|e('js') }}",
                 greetingEN: "{{ config('Lzd24Chatbot.config.greetingEN')|e('js') }}"
             });

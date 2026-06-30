@@ -42,7 +42,7 @@ Use this if you have the project in GitHub/GitLab.
 ```text
 GEMINI_API_KEY=<from backend/.env>
 PYTHON_VERSION=3.12.8
-GEMINI_CHAT_MODEL=gemini-2.5-flash
+GEMINI_CHAT_MODEL=gemini-2.5-flash-lite
 GEMINI_EMBED_MODEL=gemini-embedding-001
 GEMINI_EMBED_DIM=768
 SUPABASE_URL=<from backend/.env>
@@ -209,15 +209,17 @@ If there is no direct `Configure` link:
 ```text
 Enable chatbot: ON
 Backend chat URL: https://YOUR-PUBLIC-BACKEND/chat
-Bot name: Ginie - Ihr Lizenzassistent
+Bot name: Ginie – Ihr Lizenzassistent
 Avatar image URL: paste client avatar URL from Shopware Media
-German greeting: Wir sind online für Sie.
+German greeting: Wir sind online für Sie
 English greeting: We are online for you.
 Support email: support@lizenzdeals24.de
 WhatsApp link: leave empty until client gives real wa.me link
 Primary color: #1d4ed8
-Header dark color: #1e40af
+Header dark color: #0f1e3d
 Default language: de
+Launcher bottom offset: 96
+Launcher right offset: 20
 ```
 
 Replace:

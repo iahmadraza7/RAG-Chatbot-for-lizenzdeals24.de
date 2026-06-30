@@ -13,7 +13,7 @@ Browser widget ──► FastAPI /chat ───────┘──► Gemini 
 
 - **Backend:** Python FastAPI (async) — deploy to Render / Hugging Face Spaces free tier.
 - **Vector DB:** Supabase Postgres + `pgvector`.
-- **LLM:** Google Gemini free tier — `gemini-2.5-flash` (chat) + `gemini-embedding-001` (768-dim embeddings).
+- **LLM:** Google Gemini free tier — `gemini-2.5-flash-lite` (chat) + `gemini-embedding-001` (768-dim embeddings).
 - **Widget:** single embeddable, dependency-free `widget.js` (Google-Tag-Manager friendly).
 - **All secrets via `.env`** — nothing is hardcoded.
 
@@ -120,6 +120,7 @@ uvicorn main:app --reload --port 8000
 
 - Health check: <http://localhost:8000/health>
 - API docs (Swagger): <http://localhost:8000/docs>
+- Streaming chat: `POST /chat/stream` (`text/event-stream`)
 
 Quick test:
 
@@ -164,19 +165,32 @@ Custom HTML tag):
     backendUrl: "https://your-api-host/chat",   // your deployed FastAPI /chat
     defaultLang: "de",
     avatarUrl: "https://lizenzdeals24.de/media/lzd24-avatar.png",
+    agentAvatarUrl: "",
+    useAgentAvatar: false,
     primaryColor: "#1d4ed8",
-    greetingDE: "Hallo! 👋 Fragen zu Software-Lizenzen?",
-    greetingEN: "Hi! 👋 Questions about software licenses?"
+    primaryColorDark: "#0f1e3d",
+    offsetBottom: 96,
+    offsetRight: 20,
+    greetingDE: "Wir sind online für Sie",
+    greetingEN: "We are online for you",
+    quickRepliesDE: [
+      { icon: "🔑", text: "Lizenzschlüssel nicht erhalten" },
+      { icon: "⚠", text: "Lizenzschlüssel funktioniert nicht" },
+      { icon: "💻", text: "Hilfe bei Installation" },
+      { icon: "🧾", text: "Hilfe mit Rechnung" },
+      { icon: "💬", text: "Beratung" }
+    ]
   };
 </script>
 <script src="https://your-cdn/widget.js" defer></script>
 ```
 
-All tunables (avatar, greetings, colors, backend URL, DE/EN default) live in the
-`CONFIG` object at the top of [`widget/widget.js`](widget/widget.js) and can be
-overridden via `window.LZD24_CONFIG` **without touching the logic**. The widget
-shows a floating bubble, greeting popup, DE/EN toggle, typing indicator, and the
-disclaimer *"Bitte keine persönlichen Daten eingeben."*
+All tunables (avatar, greetings, colors, backend URL, DE/EN default, quick
+replies and launcher offsets) live in the `CONFIG` object at the top of
+[`widget/widget.js`](widget/widget.js) and can be overridden via
+`window.LZD24_CONFIG` **without touching the logic**. The widget shows a floating
+bubble, greeting popup card, DE/EN toggle, quick replies, streaming typing
+updates, and the disclaimer *"Bitte keine persönlichen Daten eingeben."*
 
 Make sure the page's origin is listed in `ALLOWED_ORIGINS` on the backend.
 

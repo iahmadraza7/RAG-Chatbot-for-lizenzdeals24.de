@@ -1,7 +1,8 @@
 """LZD24 Support — RAG chat backend (FastAPI, async).
 
-POST /chat   -> product / FAQ questions answered strictly from retrieved context.
-GET  /health -> liveness probe.
+POST /chat        -> product / FAQ questions answered strictly from retrieved context.
+POST /chat/stream -> streaming SSE variant of /chat.
+GET  /health      -> liveness probe.
 
 Design constraints (do NOT relax):
   * Anti-hallucination: the model answers ONLY from retrieved CONTEXT.
@@ -13,10 +14,12 @@ from __future__ import annotations
 import re
 import math
 import time
+import json
 
 import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 import config
@@ -28,7 +31,7 @@ app.add_middleware(
     allow_origins=config.ALLOWED_ORIGINS,
     allow_credentials=False,
     allow_methods=["POST", "GET", "OPTIONS"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "Accept"],
 )
 
 # A single shared async client (created on startup) for connection reuse.
@@ -215,17 +218,14 @@ class RateLimited(Exception):
     """Raised when Gemini returns 429 so the endpoint can fall back politely."""
 
 
-async def generate_answer(message: str, context: str, lang: str) -> str:
-    api_key = config.require_gemini()
-    url = (f"{config.GEMINI_BASE}/models/{config.GEMINI_CHAT_MODEL}"
-           f":generateContent?key={api_key}")
+def build_generation_payload(message: str, context: str, lang: str) -> dict:
     answer_language = "German" if lang == "de" else "English"
     user_turn = (
         f"CONTEXT:\n{context}\n\n"
         f"ANSWER LANGUAGE: {answer_language}\n"
         f"USER QUESTION:\n{message}"
     )
-    payload = {
+    return {
         "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
         "contents": [{"role": "user", "parts": [{"text": user_turn}]}],
         "generationConfig": {
@@ -234,6 +234,13 @@ async def generate_answer(message: str, context: str, lang: str) -> str:
             "maxOutputTokens": 600,
         },
     }
+
+
+async def generate_answer(message: str, context: str, lang: str) -> str:
+    api_key = config.require_gemini()
+    url = (f"{config.GEMINI_BASE}/models/{config.GEMINI_CHAT_MODEL}"
+           f":generateContent?key={api_key}")
+    payload = build_generation_payload(message, context, lang)
     assert _client is not None
     resp = await _client.post(url, json=payload)
     if resp.status_code == 429:
@@ -340,6 +347,31 @@ async def log_unanswered(question: str, lang: str, top_score: float | None) -> N
         pass  # logging must not affect the user-facing response
 
 
+async def prepare_context(message: str, lang: str) -> tuple[str | None, list[dict], float | None]:
+    """Embed and retrieve with the same anti-hallucination gate used by /chat."""
+    embedding = await embed_query(message)
+    matches = await search_products(embedding, config.TOP_K)
+    top_score = matches[0]["similarity"] if matches else None
+    good = [m for m in matches if m.get("similarity", 0) >= config.MIN_SIMILARITY]
+    if not good:
+        await log_unanswered(message, lang, top_score)
+        return None, [], top_score
+    context = "\n\n---\n\n".join(m["content"] for m in good)
+    return context, good, top_score
+
+
+def build_sources(matches: list[dict]) -> list[Source]:
+    return [
+        Source(id=m["id"], name=m.get("name") or m.get("metadata", {}).get("name", ""),
+               similarity=round(float(m.get("similarity", 0)), 4))
+        for m in matches
+    ]
+
+
+def sse(event: str, data: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
 # --- Routes ------------------------------------------------------------------
 
 @app.get("/")
@@ -370,8 +402,7 @@ async def chat(req: ChatRequest) -> ChatResponse:
 
     # 1. Embed + retrieve.
     try:
-        embedding = await embed_query(message)
-        matches = await search_products(embedding, config.TOP_K)
+        context, good, _top_score = await prepare_context(message, lang)
     except RuntimeError:
         return ChatResponse(answer=FALLBACK[lang], sources=[])
     except httpx.HTTPStatusError as e:
@@ -379,16 +410,11 @@ async def chat(req: ChatRequest) -> ChatResponse:
             return ChatResponse(answer=FALLBACK[lang], sources=[])
         raise
 
-    top_score = matches[0]["similarity"] if matches else None
-    good = [m for m in matches if m.get("similarity", 0) >= config.MIN_SIMILARITY]
-
     # 2. No confident match -> log the gap and decline (no LLM guess needed).
-    if not good:
-        await log_unanswered(message, lang, top_score)
+    if context is None:
         return ChatResponse(answer=NO_CONTEXT[lang], sources=[])
 
     # 3. Build CONTEXT from the good matches and ask the LLM.
-    context = "\n\n---\n\n".join(m["content"] for m in good)
     try:
         answer = await generate_answer(message, context, lang)
     except RateLimited:
@@ -398,9 +424,83 @@ async def chat(req: ChatRequest) -> ChatResponse:
     except httpx.HTTPError:
         return ChatResponse(answer=FALLBACK[lang], sources=[])
 
-    sources = [
-        Source(id=m["id"], name=m.get("name") or m.get("metadata", {}).get("name", ""),
-               similarity=round(float(m.get("similarity", 0)), 4))
-        for m in good
-    ]
-    return ChatResponse(answer=answer, sources=sources)
+    return ChatResponse(answer=answer, sources=build_sources(good))
+
+
+@app.post("/chat/stream")
+async def chat_stream(req: ChatRequest) -> StreamingResponse:
+    message = req.message.strip()
+    lang = req.lang if req.lang in ("de", "en") else detect_lang(message)
+
+    async def events():
+        if is_greeting(message):
+            yield sse("answer", {"answer": GREETING_REPLY[lang], "sources": []})
+            yield sse("done", {})
+            return
+
+        if is_contact_intent(message, lang):
+            yield sse("answer", {"answer": contact_reply(lang), "sources": []})
+            yield sse("done", {})
+            return
+
+        try:
+            context, good, _top_score = await prepare_context(message, lang)
+        except (RuntimeError, httpx.HTTPStatusError):
+            yield sse("error", {"answer": FALLBACK[lang], "sources": []})
+            yield sse("done", {})
+            return
+
+        if context is None:
+            yield sse("answer", {"answer": NO_CONTEXT[lang], "sources": []})
+            yield sse("done", {})
+            return
+
+        sources = [s.model_dump() for s in build_sources(good)]
+        api_key = config.require_gemini()
+        url = (f"{config.GEMINI_BASE}/models/{config.GEMINI_CHAT_MODEL}"
+               f":streamGenerateContent?alt=sse&key={api_key}")
+        payload = build_generation_payload(message, context, lang)
+
+        assert _client is not None
+        try:
+            sent_token = False
+            async with _client.stream("POST", url, json=payload, timeout=60.0) as resp:
+                if resp.status_code == 429:
+                    yield sse("error", {"answer": FALLBACK[lang], "sources": []})
+                    yield sse("done", {})
+                    return
+                if resp.status_code >= 400:
+                    yield sse("error", {"answer": FALLBACK[lang], "sources": []})
+                    yield sse("done", {})
+                    return
+
+                async for line in resp.aiter_lines():
+                    if not line.startswith("data:"):
+                        continue
+                    raw = line[5:].strip()
+                    if not raw:
+                        continue
+                    try:
+                        data = json.loads(raw)
+                    except json.JSONDecodeError:
+                        continue
+                    candidates = data.get("candidates") or []
+                    if not candidates:
+                        continue
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    for part in parts:
+                        token = part.get("text")
+                        if token:
+                            sent_token = True
+                            yield sse("token", {"text": token})
+
+            if sent_token:
+                yield sse("sources", {"sources": sources})
+            else:
+                yield sse("answer", {"answer": NO_CONTEXT[lang], "sources": []})
+            yield sse("done", {})
+        except httpx.HTTPError:
+            yield sse("error", {"answer": FALLBACK[lang], "sources": []})
+            yield sse("done", {})
+
+    return StreamingResponse(events(), media_type="text/event-stream")
