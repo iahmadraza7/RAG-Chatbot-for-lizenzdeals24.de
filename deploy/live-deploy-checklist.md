@@ -122,7 +122,7 @@ build/Lzd24Chatbot.zip
 Current fixed package:
 
 ```text
-Ginie Chatbot / Lzd24Chatbot version 1.2.0
+Ginie Chatbot / Lzd24Chatbot version 1.3.0
 ```
 
 This version contains the professional dark blue chat design, the client avatar,
@@ -277,7 +277,7 @@ Clear and warm up caches
 After cache clear, open this URL in a browser:
 
 ```text
-https://lizenzdeals24.de/bundles/lzd24chatbot/widget/widget.js?v=1.2.0
+https://lizenzdeals24.de/bundles/lzd24chatbot/widget/widget.js?v=1.3.0
 ```
 
 Search on the page with `Ctrl + F`:
@@ -291,7 +291,7 @@ If you find this text, the new professional widget is live.
 If you still see the old simple widget code with only `Wir sind online für Sie.`
 and no `Unsere Experten sind online!`, Shopware is still serving old plugin
 assets. Upload/update the `build/Lzd24Chatbot.zip` again, confirm version
-`1.2.0`, then clear cache again.
+`1.3.0`, then clear cache again.
 
 ### A5 - Check Live Storefront
 

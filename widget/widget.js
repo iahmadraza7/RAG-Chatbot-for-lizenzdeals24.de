@@ -43,7 +43,7 @@
       disclaimerEN: "Please do not enter personal data.",
       showGreetingPopup: true,
       greetingDelayMs: 650,
-      showSources: true,
+      showSources: false,
       maxSourceNames: 2,
       stream: true,
       streamUrl: "",
