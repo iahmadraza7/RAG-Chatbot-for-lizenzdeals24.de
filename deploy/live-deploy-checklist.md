@@ -118,6 +118,15 @@ Use the file:
 build/Lzd24Chatbot.zip
 ```
 
+Current fixed package:
+
+```text
+Ginie Chatbot / Lzd24Chatbot version 1.1.0
+```
+
+This version contains the professional dark chat design, the client avatar,
+streaming responses, cache-busted widget asset, and trust-badge offset.
+
 ### A1 - Upload Extension
 
 1. Open Shopware admin:
@@ -178,12 +187,16 @@ Lzd24Chatbot
    - Click `Install`.
    - Wait until installation finishes.
 
-3. If it shows a toggle switch:
+3. If it shows `Update`:
+   - Click `Update`.
+   - Wait until update finishes.
+
+4. If it shows a toggle switch:
    - Turn the toggle ON / blue.
 
-4. If you see `...` menu on the right:
+5. If you see `...` menu on the right:
    - Click `...`
-   - Click `Install`, `Activate`, or `Configure`, depending what appears.
+   - Click `Update`, `Install`, `Activate`, or `Configure`, depending what appears.
 
 ### A3 - Configure Extension
 
@@ -256,6 +269,27 @@ Clear caches
 ```text
 Clear and warm up caches
 ```
+
+### A4.1 - Confirm New Widget Asset Is Live
+
+After cache clear, open this URL in a browser:
+
+```text
+https://lizenzdeals24.de/bundles/lzd24chatbot/widget/widget.js?v=1.1.0
+```
+
+Search on the page with `Ctrl + F`:
+
+```text
+Unsere Experten sind online!
+```
+
+If you find this text, the new professional widget is live.
+
+If you still see the old simple widget code with only `Wir sind online für Sie.`
+and no `Unsere Experten sind online!`, Shopware is still serving old plugin
+assets. Upload/update the `build/Lzd24Chatbot.zip` again, confirm version
+`1.1.0`, then clear cache again.
 
 ### A5 - Check Live Storefront
 
