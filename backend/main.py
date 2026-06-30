@@ -119,7 +119,20 @@ _CONTACT_INTENT = {
 }
 
 _PRICE_INTENT = re.compile(
-    r"\b(kostet|kosten|preis|wieviel|wie\s+viel|price|cost|how\s+much)\b",
+    r"\b(kostet|kosten|preis|wieviel|wie\s+viel|price|cost|how\s+much|"
+    r"expensive|cheap|cheapest|less\s+expensive|günstig|guenstig|billig|preiswert)\b",
+    re.IGNORECASE,
+)
+
+_CHEAP_INTENT = re.compile(
+    r"\b(cheap|cheapest|less\s+expensive|lowest\s+price|günstig|guenstig|"
+    r"günstigste|guenstigste|billig|preiswert)\b",
+    re.IGNORECASE,
+)
+
+_INFO_INTENT = re.compile(
+    r"\b(what\s+is|what\s+are|tell\s+me\s+about|explain|was\s+ist|was\s+sind|"
+    r"erklaer|erklär|informationen|info\s+zu)\b",
     re.IGNORECASE,
 )
 
@@ -127,21 +140,105 @@ _PRICE_INTENT = re.compile(
 _SHORT_NON_PRODUCT = re.compile(r"^[a-zäöüß\s'.!?-]{1,12}$", re.IGNORECASE)
 
 
-def contact_reply(lang: str) -> str:
+def support_intent(text: str, lang: str) -> str | None:
+    lowered = text.lower()
     if lang == "en":
-        text = (
-            f"For quote requests, complaints, or personal support cases, "
-            f"please contact {config.SUPPORT_EMAIL} directly. Please do not "
-            f"enter personal data in this chat."
+        patterns = [
+            ("key_not_received", r"license\s+key\s+not\s+received|key\s+not\s+received|not\s+received"),
+            ("key_not_working", r"license\s+key\s+does\s+not\s+work|key\s+does\s+not\s+work|activation|doesn'?t\s+work"),
+            ("installation", r"help\s+with\s+installation|installation|install"),
+            ("invoice", r"help\s+with\s+invoice|invoice|billing|rechnung"),
+            ("consultation", r"consultation|license\s+advice|quote\s+request|request\s+a\s+quote|get\s+a\s+quote"),
+            ("complaint", r"complaint|return|refund|contact\s+support|contact\s+request"),
+        ]
+    else:
+        patterns = [
+            ("key_not_received", r"lizenzschlüssel\s+nicht\s+erhalten|key\s+nicht\s+erhalten|nicht\s+erhalten"),
+            ("key_not_working", r"lizenzschlüssel\s+funktioniert\s+nicht|aktivierung|funktioniert\s+nicht"),
+            ("installation", r"hilfe\s+bei\s+installation|installation|installieren"),
+            ("invoice", r"hilfe\s+mit\s+rechnung|rechnung|zahlung"),
+            ("consultation", r"beratung|lizenzberatung|angebotsanfrage|angebot\s+(anfragen|bekommen|erhalten)|kostenvoranschlag"),
+            ("complaint", r"reklamation|beschwerde|retoure|rückgabe|widerruf|support\s+kontaktieren|kontakt\s+aufnehmen"),
+        ]
+    for intent, pattern in patterns:
+        if re.search(pattern, lowered, re.IGNORECASE):
+            return intent
+    return None
+
+
+def contact_reply(lang: str, intent: str | None = None) -> str:
+    if lang == "en":
+        replies = {
+            "key_not_received": (
+                "If your license key has not arrived, please check your spam/junk folder first. "
+                f"If it is still missing, contact {config.SUPPORT_EMAIL}. Please do not enter order "
+                "numbers, email addresses, or license keys in this chat."
+            ),
+            "key_not_working": (
+                "For activation problems, please check that the product version matches your license "
+                "and copy the key without extra spaces. If it still does not work, contact "
+                f"{config.SUPPORT_EMAIL}. Please do not post license keys or order data here."
+            ),
+            "installation": (
+                "I can help with installation questions. Please write the product name and the step "
+                "where you are stuck, without personal data or license keys. For direct support, "
+                f"contact {config.SUPPORT_EMAIL}."
+            ),
+            "invoice": (
+                f"For invoice or billing questions, please contact {config.SUPPORT_EMAIL}. "
+                "Please do not enter invoice numbers, order numbers, or personal data in this chat."
+            ),
+            "consultation": (
+                "For license advice or a quote, you can ask a product question here, or contact "
+                f"{config.SUPPORT_EMAIL} for a personal offer. Please do not enter personal data "
+                "in this chat."
+            ),
+            "complaint": (
+                f"For complaints, returns, or personal support cases, please contact {config.SUPPORT_EMAIL}. "
+                "Please do not enter personal data in this chat."
+            ),
+        }
+        text = replies.get(intent) or (
+            f"For quote requests, complaints, or personal support cases, please contact "
+            f"{config.SUPPORT_EMAIL} directly. Please do not enter personal data in this chat."
         )
         if config.WHATSAPP_URL:
             text += f" For urgent support, you can also use WhatsApp: {config.WHATSAPP_URL}"
         return text
 
-    text = (
-        f"Für Angebotsanfragen, Reklamationen oder persönliche Anliegen "
-        f"schreiben Sie bitte direkt an {config.SUPPORT_EMAIL}. Bitte geben "
-        f"Sie hier im Chat keine persönlichen Daten ein."
+    replies = {
+        "key_not_received": (
+            "Wenn Ihr Lizenzschlüssel noch nicht angekommen ist, prüfen Sie bitte zuerst den Spam-/Junk-Ordner. "
+            f"Falls er weiterhin fehlt, kontaktieren Sie {config.SUPPORT_EMAIL}. Bitte geben Sie hier keine "
+            "Bestellnummern, E-Mail-Adressen oder Lizenzschlüssel ein."
+        ),
+        "key_not_working": (
+            "Bei Aktivierungsproblemen prüfen Sie bitte zuerst, ob Produktversion und Lizenz zusammenpassen "
+            f"und ob der Schlüssel ohne Leerzeichen kopiert wurde. Falls es weiter nicht funktioniert, "
+            f"kontaktieren Sie {config.SUPPORT_EMAIL}. Bitte posten Sie hier keine Lizenzschlüssel."
+        ),
+        "installation": (
+            "Ich helfe gern bei Installationsfragen. Schreiben Sie bitte den Produktnamen und bei welchem "
+            f"Schritt ein Fehler auftritt, ohne persönliche Daten oder Lizenzschlüssel. Für direkten Support: "
+            f"{config.SUPPORT_EMAIL}."
+        ),
+        "invoice": (
+            f"Für Fragen zu Rechnung oder Zahlung kontaktieren Sie bitte {config.SUPPORT_EMAIL}. "
+            "Bitte geben Sie hier keine Rechnungsnummern, Bestellnummern oder persönlichen Daten ein."
+        ),
+        "consultation": (
+            "Für Lizenzberatung oder ein Angebot können Sie hier eine Produktfrage stellen oder "
+            f"{config.SUPPORT_EMAIL} für ein persönliches Angebot kontaktieren. Bitte geben Sie hier "
+            "keine persönlichen Daten ein."
+        ),
+        "complaint": (
+            f"Für Reklamationen, Rückgaben oder persönliche Anliegen kontaktieren Sie bitte {config.SUPPORT_EMAIL}. "
+            "Bitte geben Sie hier keine persönlichen Daten ein."
+        ),
+    }
+    text = replies.get(intent) or (
+        f"Für Angebotsanfragen, Reklamationen oder persönliche Anliegen schreiben Sie bitte direkt an "
+        f"{config.SUPPORT_EMAIL}. Bitte geben Sie hier im Chat keine persönlichen Daten ein."
     )
     if config.WHATSAPP_URL:
         text += f" Für dringenden Support können Sie auch WhatsApp nutzen: {config.WHATSAPP_URL}"
@@ -149,7 +246,7 @@ def contact_reply(lang: str) -> str:
 
 
 def is_contact_intent(text: str, lang: str) -> bool:
-    return bool(_CONTACT_INTENT[lang].search(text))
+    return bool(_CONTACT_INTENT[lang].search(text)) or support_intent(text, lang) is not None
 
 
 def is_greeting(text: str) -> bool:
@@ -180,34 +277,131 @@ def _localized_price(price: str, lang: str) -> str:
     return re.sub(r"(\d+)\.(\d{2})", r"\1,\2", price)
 
 
-def catalog_fallback_answer(message: str, matches: list[dict], lang: str) -> str | None:
-    """Answer from retrieved catalog metadata only when Gemini is unavailable."""
+def _price_number(price: str) -> float | None:
+    match = re.search(r"(\d+(?:[.,]\d{1,2})?)", price or "")
+    if not match:
+        return None
+    try:
+        return float(match.group(1).replace(",", "."))
+    except ValueError:
+        return None
+
+
+def _description(match: dict) -> str:
+    content = match.get("content") or ""
+    found = re.search(r"Beschreibung:\s*(.+?)(?:\nPreis:|\n[A-ZÄÖÜ][^:\n]{1,30}:|$)", content, re.DOTALL)
+    text = found.group(1).strip() if found else content.strip()
+    text = re.sub(r"\s+", " ", text)
+    name = match.get("name") or ""
+    if name and text.lower().startswith(name.lower()):
+        text = text[len(name):].strip(" .:-")
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+    compact = " ".join(sentences[:2]).strip()
+    return compact[:520].rstrip()
+
+
+def _content_field(match: dict, label: str) -> str:
+    content = match.get("content") or ""
+    found = re.search(rf"^\s*-?\s*{re.escape(label)}:\s*(.+)$", content, re.MULTILINE)
+    return found.group(1).strip() if found else ""
+
+
+def catalog_items(matches: list[dict]) -> list[dict]:
     items = []
-    for match in matches[:3]:
+    seen = set()
+    for match in matches:
         name = match.get("name") or (match.get("metadata") or {}).get("name") or ""
         price = _match_price(match)
         if not name:
             continue
-        if price:
-            items.append((name, _localized_price(price, lang)))
-        else:
-            items.append((name, ""))
+        key = (name.casefold(), price.casefold())
+        if key in seen:
+            continue
+        seen.add(key)
+        items.append({
+            "name": name,
+            "price": price,
+            "price_number": _price_number(price),
+            "description": _description(match),
+            "vendor": _content_field(match, "Hersteller"),
+            "category": _content_field(match, "Kategorie"),
+            "delivery": _content_field(match, "Versandart"),
+            "product_type": _content_field(match, "Produktart"),
+            "feature": _content_field(match, "Eigenschaft"),
+        })
+    return items
 
+
+def catalog_info_answer(item: dict, lang: str) -> str:
+    price = _localized_price(item["price"], lang) if item["price"] else ""
+    if lang == "en":
+        details = []
+        if item["vendor"]:
+            details.append(f"manufacturer: {item['vendor']}")
+        if item["product_type"]:
+            details.append(f"product type: {item['product_type']}")
+        if item["feature"]:
+            details.append(f"area: {item['feature']}")
+        if item["category"]:
+            details.append(f"category: {item['category']}")
+        if item["delivery"]:
+            details.append(f"delivery: {item['delivery']}")
+        answer = f"{item['name']} is listed in the catalog"
+        answer += " with " + ", ".join(details) if details else ""
+        answer += "."
+        if price:
+            answer += f" Current catalog price: {price}."
+        return answer
+
+    answer = f"{item['name']}: {item['description']}" if item["description"] else item["name"]
+    if price:
+        answer += f" Aktueller Katalogpreis: {price}."
+    return answer
+
+
+def catalog_fallback_answer(message: str, matches: list[dict], lang: str) -> str | None:
+    """Answer from retrieved catalog metadata only when Gemini is unavailable."""
+    items = catalog_items(matches)
     if not items:
         return None
 
+    if _CHEAP_INTENT.search(message):
+        priced = [item for item in items if item["price_number"] is not None]
+        if priced:
+            priced.sort(key=lambda item: item["price_number"])
+            best = priced[0]
+            price = _localized_price(best["price"], lang)
+            if lang == "en":
+                lines = [f"The lowest-priced matching option I found is {best['name']} for {price}."]
+                if len(priced) > 1:
+                    lines.append("Other matching options:")
+            else:
+                lines = [f"Die günstigste passende Option ist {best['name']} für {price}."]
+                if len(priced) > 1:
+                    lines.append("Weitere passende Optionen:")
+            for item in priced[1:3]:
+                lines.append(f"- {item['name']}: {_localized_price(item['price'], lang)}")
+            return "\n".join(lines)
+
     is_price_question = bool(_PRICE_INTENT.search(message))
-    if is_price_question and items[0][1]:
+    if is_price_question and items[0]["price"]:
+        name = items[0]["name"]
+        price = _localized_price(items[0]["price"], lang)
         if lang == "en":
-            return f"{items[0][0]} costs {items[0][1]}."
-        return f"{items[0][0]} kostet {items[0][1]}."
+            return f"{name} costs {price}."
+        return f"{name} kostet {price}."
+
+    if _INFO_INTENT.search(message):
+        item = items[0]
+        return catalog_info_answer(item, lang)
 
     if lang == "en":
         lines = ["I found these matching products in the catalog:"]
     else:
         lines = ["Ich habe diese passenden Produkte im Katalog gefunden:"]
-    for name, price in items:
-        lines.append(f"- {name}: {price}" if price else f"- {name}")
+    for item in items[:3]:
+        price = _localized_price(item["price"], lang) if item["price"] else ""
+        lines.append(f"- {item['name']}: {price}" if price else f"- {item['name']}")
     return "\n".join(lines)
 
 
@@ -471,8 +665,9 @@ async def chat(req: ChatRequest) -> ChatResponse:
     if is_greeting(message):
         return ChatResponse(answer=GREETING_REPLY[lang], sources=[])
 
+    intent = support_intent(message, lang)
     if is_contact_intent(message, lang):
-        return ChatResponse(answer=contact_reply(lang), sources=[])
+        return ChatResponse(answer=contact_reply(lang, intent), sources=[])
 
     if is_too_short_for_product_search(message):
         return ChatResponse(answer=NO_CONTEXT[lang], sources=[])
@@ -493,7 +688,7 @@ async def chat(req: ChatRequest) -> ChatResponse:
 
     # 3. Price questions can be answered deterministically from catalog
     # metadata. This is faster and safer than asking the LLM to rephrase.
-    if _PRICE_INTENT.search(message):
+    if _PRICE_INTENT.search(message) or _INFO_INTENT.search(message):
         direct_answer = catalog_fallback_answer(message, good, lang)
         if direct_answer:
             return ChatResponse(answer=direct_answer, sources=build_sources(good))
@@ -531,8 +726,9 @@ async def chat_stream(req: ChatRequest) -> StreamingResponse:
             yield sse("done", {})
             return
 
+        intent = support_intent(message, lang)
         if is_contact_intent(message, lang):
-            yield sse("answer", {"answer": contact_reply(lang), "sources": []})
+            yield sse("answer", {"answer": contact_reply(lang, intent), "sources": []})
             yield sse("done", {})
             return
 
@@ -555,7 +751,7 @@ async def chat_stream(req: ChatRequest) -> StreamingResponse:
 
         sources = [s.model_dump() for s in build_sources(good)]
 
-        if _PRICE_INTENT.search(message):
+        if _PRICE_INTENT.search(message) or _INFO_INTENT.search(message):
             direct_answer = catalog_fallback_answer(message, good, lang)
             if direct_answer:
                 for chunk in token_chunks(direct_answer):
