@@ -31,7 +31,7 @@
             <name>avatarUrl</name>
             <label>Avatar image URL</label>
             <label lang="de-DE">Avatar-Bild-URL</label>
-            <defaultValue>https://lizenzdeals24.de/bundles/lzd24chatbot/widget/ginie-avatar.png</defaultValue>
+            <defaultValue>https://lizenzdeals24.de/media/f8/33/c3/1782816369/Support%20Chatbot%20Icon%20Mensch.png?ts=1782816369</defaultValue>
         </input-field>
 
         <input-field type="bool">
@@ -97,10 +97,17 @@
         </input-field>
 
         <input-field type="text">
+            <name>accentColor</name>
+            <label>Button accent color</label>
+            <label lang="de-DE">Button-Akzentfarbe</label>
+            <defaultValue>#9ad72d</defaultValue>
+        </input-field>
+
+        <input-field type="text">
             <name>primaryColorDark</name>
             <label>Header dark color</label>
             <label lang="de-DE">Dunkle Kopfzeilenfarbe</label>
-            <defaultValue>#0f1e3d</defaultValue>
+            <defaultValue>#173f46</defaultValue>
         </input-field>
 
         <input-field type="text">
@@ -116,7 +123,7 @@
             <name>offsetBottom</name>
             <label>Launcher bottom offset</label>
             <label lang="de-DE">Launcher Abstand unten</label>
-            <defaultValue>96</defaultValue>
+            <defaultValue>112</defaultValue>
         </input-field>
 
         <input-field type="int">

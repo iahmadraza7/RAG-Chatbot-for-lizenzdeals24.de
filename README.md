@@ -145,8 +145,9 @@ Response shape:
    and logs the question to the `unanswered` table — no LLM guess.
 4. Otherwise it passes only the retrieved chunks as `CONTEXT` to Flash-Lite under
    a strict anti-hallucination system prompt.
-5. Gemini `429`/errors → polite localized fallback ("Bitte versuchen Sie es
-   später erneut …").
+5. Gemini `429`/errors → if a confident catalog match exists, it answers from
+   stored product metadata (name/price) instead of guessing; otherwise it uses
+   the polite localized fallback ("Bitte versuchen Sie es später erneut …").
 
 **PII segregation:** `/chat` is product/FAQ only. It never asks for or stores
 names, emails, order numbers, or payment data. Quote/complaint intent is routed
@@ -164,12 +165,13 @@ Custom HTML tag):
   window.LZD24_CONFIG = {
     backendUrl: "https://your-api-host/chat",   // your deployed FastAPI /chat
     defaultLang: "de",
-    avatarUrl: "https://lizenzdeals24.de/bundles/lzd24chatbot/widget/ginie-avatar.png",
+    avatarUrl: "https://lizenzdeals24.de/media/f8/33/c3/1782816369/Support%20Chatbot%20Icon%20Mensch.png?ts=1782816369",
     agentAvatarUrl: "",
     useAgentAvatar: false,
     primaryColor: "#1d4ed8",
-    primaryColorDark: "#0f1e3d",
-    offsetBottom: 96,
+    primaryColorDark: "#173f46",
+    accentColor: "#9ad72d",
+    offsetBottom: 112,
     offsetRight: 20,
     greetingDE: "Wir sind online für Sie",
     greetingEN: "We are online for you",

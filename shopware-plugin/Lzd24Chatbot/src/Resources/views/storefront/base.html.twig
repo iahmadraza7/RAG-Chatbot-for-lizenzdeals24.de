@@ -5,8 +5,8 @@
 
     {% if config('Lzd24Chatbot.config.enabled') %}
         {% set configuredAvatarUrl = config('Lzd24Chatbot.config.avatarUrl') %}
-        {% set bundledAvatarUrl = asset('bundles/lzd24chatbot/widget/ginie-avatar.png') %}
-        {% set avatarUrl = (configuredAvatarUrl and 'dicebear.com' not in configuredAvatarUrl) ? configuredAvatarUrl : bundledAvatarUrl %}
+        {% set defaultAvatarUrl = 'https://lizenzdeals24.de/media/f8/33/c3/1782816369/Support%20Chatbot%20Icon%20Mensch.png?ts=1782816369' %}
+        {% set avatarUrl = (configuredAvatarUrl and 'dicebear.com' not in configuredAvatarUrl and 'bundles/lzd24chatbot/widget/ginie-avatar.png' not in configuredAvatarUrl) ? configuredAvatarUrl : defaultAvatarUrl %}
         <script>
             window.LZD24_CONFIG = Object.assign({}, window.LZD24_CONFIG || {}, {
                 backendUrl: "{{ config('Lzd24Chatbot.config.backendUrl')|e('js') }}",
@@ -15,13 +15,14 @@
                 agentAvatarUrl: "{{ config('Lzd24Chatbot.config.agentAvatarUrl')|e('js') }}",
                 useAgentAvatar: {{ config('Lzd24Chatbot.config.useAgentAvatar') ? 'true' : 'false' }},
                 primaryColor: "{{ config('Lzd24Chatbot.config.primaryColor')|e('js') }}",
+                accentColor: "{{ config('Lzd24Chatbot.config.accentColor')|e('js') }}",
                 primaryColorDark: "{{ config('Lzd24Chatbot.config.primaryColorDark')|e('js') }}",
                 defaultLang: "{{ config('Lzd24Chatbot.config.defaultLang')|e('js') }}",
                 supportEmail: "{{ config('Lzd24Chatbot.config.supportEmail')|e('js') }}",
                 whatsappUrl: "{{ config('Lzd24Chatbot.config.whatsappUrl')|e('js') }}",
                 telUrl: "{{ config('Lzd24Chatbot.config.telUrl')|e('js') }}",
                 contactUrl: "{{ config('Lzd24Chatbot.config.contactUrl')|e('js') }}",
-                offsetBottom: {{ config('Lzd24Chatbot.config.offsetBottom')|default(96) }},
+                offsetBottom: {{ config('Lzd24Chatbot.config.offsetBottom')|default(112) }},
                 offsetRight: {{ config('Lzd24Chatbot.config.offsetRight')|default(20) }},
                 greetingDE: "{{ config('Lzd24Chatbot.config.greetingDE')|e('js') }}",
                 greetingEN: "{{ config('Lzd24Chatbot.config.greetingEN')|e('js') }}"

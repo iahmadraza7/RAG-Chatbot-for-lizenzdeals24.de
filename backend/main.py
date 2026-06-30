@@ -112,6 +112,11 @@ _CONTACT_INTENT = {
     ),
 }
 
+_PRICE_INTENT = re.compile(
+    r"\b(kostet|kosten|preis|wieviel|wie\s+viel|price|cost|how\s+much)\b",
+    re.IGNORECASE,
+)
+
 
 def contact_reply(lang: str) -> str:
     if lang == "en":
@@ -140,6 +145,53 @@ def is_contact_intent(text: str, lang: str) -> bool:
 
 def is_greeting(text: str) -> bool:
     return bool(_GREETING_INTENT.search(text))
+
+
+def _match_price(match: dict) -> str:
+    metadata = match.get("metadata") or {}
+    price = metadata.get("price")
+    if isinstance(price, str) and price.strip():
+        return price.strip()
+    content = match.get("content") or ""
+    found = re.search(r"^Preis:\s*(.+)$", content, re.MULTILINE)
+    return found.group(1).strip() if found else ""
+
+
+def _localized_price(price: str, lang: str) -> str:
+    if lang != "de":
+        return price
+    return re.sub(r"(\d+)\.(\d{2})", r"\1,\2", price)
+
+
+def catalog_fallback_answer(message: str, matches: list[dict], lang: str) -> str | None:
+    """Answer from retrieved catalog metadata only when Gemini is unavailable."""
+    items = []
+    for match in matches[:3]:
+        name = match.get("name") or (match.get("metadata") or {}).get("name") or ""
+        price = _match_price(match)
+        if not name:
+            continue
+        if price:
+            items.append((name, _localized_price(price, lang)))
+        else:
+            items.append((name, ""))
+
+    if not items:
+        return None
+
+    is_price_question = bool(_PRICE_INTENT.search(message))
+    if is_price_question and items[0][1]:
+        if lang == "en":
+            return f"{items[0][0]} costs {items[0][1]}."
+        return f"{items[0][0]} kostet {items[0][1]}."
+
+    if lang == "en":
+        lines = ["I found these matching products in the catalog:"]
+    else:
+        lines = ["Ich habe diese passenden Produkte im Katalog gefunden:"]
+    for name, price in items:
+        lines.append(f"- {name}: {price}" if price else f"- {name}")
+    return "\n".join(lines)
 
 
 def _provider_error(resp: httpx.Response) -> str:
@@ -372,6 +424,11 @@ def sse(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
+def token_chunks(text: str, size: int = 80):
+    for i in range(0, len(text), size):
+        yield text[i:i + size]
+
+
 # --- Routes ------------------------------------------------------------------
 
 @app.get("/")
@@ -418,10 +475,19 @@ async def chat(req: ChatRequest) -> ChatResponse:
     try:
         answer = await generate_answer(message, context, lang)
     except RateLimited:
+        fallback_answer = catalog_fallback_answer(message, good, lang)
+        if fallback_answer:
+            return ChatResponse(answer=fallback_answer, sources=build_sources(good))
         return ChatResponse(answer=FALLBACK[lang], sources=[])
     except RuntimeError:
+        fallback_answer = catalog_fallback_answer(message, good, lang)
+        if fallback_answer:
+            return ChatResponse(answer=fallback_answer, sources=build_sources(good))
         return ChatResponse(answer=FALLBACK[lang], sources=[])
     except httpx.HTTPError:
+        fallback_answer = catalog_fallback_answer(message, good, lang)
+        if fallback_answer:
+            return ChatResponse(answer=fallback_answer, sources=build_sources(good))
         return ChatResponse(answer=FALLBACK[lang], sources=[])
 
     return ChatResponse(answer=answer, sources=build_sources(good))
@@ -466,11 +532,23 @@ async def chat_stream(req: ChatRequest) -> StreamingResponse:
             sent_token = False
             async with _client.stream("POST", url, json=payload, timeout=60.0) as resp:
                 if resp.status_code == 429:
-                    yield sse("error", {"answer": FALLBACK[lang], "sources": []})
+                    fallback_answer = catalog_fallback_answer(message, good, lang)
+                    if fallback_answer:
+                        for chunk in token_chunks(fallback_answer):
+                            yield sse("token", {"text": chunk})
+                        yield sse("sources", {"sources": sources})
+                    else:
+                        yield sse("error", {"answer": FALLBACK[lang], "sources": []})
                     yield sse("done", {})
                     return
                 if resp.status_code >= 400:
-                    yield sse("error", {"answer": FALLBACK[lang], "sources": []})
+                    fallback_answer = catalog_fallback_answer(message, good, lang)
+                    if fallback_answer:
+                        for chunk in token_chunks(fallback_answer):
+                            yield sse("token", {"text": chunk})
+                        yield sse("sources", {"sources": sources})
+                    else:
+                        yield sse("error", {"answer": FALLBACK[lang], "sources": []})
                     yield sse("done", {})
                     return
 
@@ -497,10 +575,18 @@ async def chat_stream(req: ChatRequest) -> StreamingResponse:
             if sent_token:
                 yield sse("sources", {"sources": sources})
             else:
-                yield sse("answer", {"answer": NO_CONTEXT[lang], "sources": []})
+                fallback_answer = catalog_fallback_answer(message, good, lang)
+                if fallback_answer:
+                    yield sse("answer", {"answer": fallback_answer, "sources": sources})
+                else:
+                    yield sse("answer", {"answer": NO_CONTEXT[lang], "sources": []})
             yield sse("done", {})
         except httpx.HTTPError:
-            yield sse("error", {"answer": FALLBACK[lang], "sources": []})
+            fallback_answer = catalog_fallback_answer(message, good, lang)
+            if fallback_answer:
+                yield sse("answer", {"answer": fallback_answer, "sources": sources})
+            else:
+                yield sse("error", {"answer": FALLBACK[lang], "sources": []})
             yield sse("done", {})
 
     return StreamingResponse(events(), media_type="text/event-stream")

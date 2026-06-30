@@ -208,30 +208,19 @@ If there is no direct `Configure` link:
 
 ```text
 Enable chatbot: ON
-Backend chat URL: https://YOUR-PUBLIC-BACKEND/chat
+Backend chat URL: https://lzd24-chat-api.onrender.com/chat
 Bot name: Ginie – Ihr Lizenzassistent
-Avatar image URL: https://lizenzdeals24.de/bundles/lzd24chatbot/widget/ginie-avatar.png
+Avatar image URL: https://lizenzdeals24.de/media/f8/33/c3/1782816369/Support%20Chatbot%20Icon%20Mensch.png?ts=1782816369
 German greeting: Wir sind online für Sie
 English greeting: We are online for you.
 Support email: support@lizenzdeals24.de
 WhatsApp link: leave empty until client gives real wa.me link
 Primary color: #1d4ed8
-Header dark color: #0f1e3d
+Button accent color: #9ad72d
+Header dark color: #173f46
 Default language: de
-Launcher bottom offset: 96
+Launcher bottom offset: 112
 Launcher right offset: 20
-```
-
-Replace:
-
-```text
-https://YOUR-PUBLIC-BACKEND/chat
-```
-
-with your Render URL, for example:
-
-```text
-https://lzd24-chat-api.onrender.com/chat
 ```
 
 4. Click:
