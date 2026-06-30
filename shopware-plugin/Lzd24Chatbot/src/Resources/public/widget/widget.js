@@ -47,6 +47,7 @@
       maxSourceNames: 2,
       stream: true,
       streamUrl: "",
+      historyStorageKey: "lzd24-chat-history-v1",
     },
     window.LZD24_CONFIG || {}
   );
@@ -59,6 +60,7 @@
   var lang = CONFIG.defaultLang === "en" ? "en" : "de";
   var greetedOnce = false;
   var activeController = null;
+  var conversation = loadConversation();
 
   var I18N = {
     de: {
@@ -161,6 +163,48 @@
 
   function quickReplies() {
     return (lang === "en" ? CONFIG.quickRepliesEN : CONFIG.quickRepliesDE).map(normalizeReply);
+  }
+
+  function loadConversation() {
+    try {
+      if (!window.localStorage) return [];
+      var raw = window.localStorage.getItem(CONFIG.historyStorageKey);
+      if (!raw) return [];
+      var items = JSON.parse(raw);
+      if (!Array.isArray(items)) return [];
+      return items
+        .filter(function (item) {
+          return item && (item.who === "user" || item.who === "bot") && typeof item.text === "string";
+        })
+        .slice(-80);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function saveConversation() {
+    try {
+      if (!window.localStorage) return;
+      window.localStorage.setItem(CONFIG.historyStorageKey, JSON.stringify(conversation.slice(-80)));
+    } catch (_) {
+      // Browser storage can be disabled; the chat must still work normally.
+    }
+  }
+
+  function persistMessage(who, text, bubble) {
+    if (who !== "user" && who !== "bot") return;
+    conversation.push({ who: who, text: text || "", ts: Date.now() });
+    conversation = conversation.slice(-80);
+    if (bubble) bubble.setAttribute("data-lzd-history-index", String(conversation.length - 1));
+    saveConversation();
+  }
+
+  function updateStoredMessage(bubble) {
+    var rawIndex = bubble && bubble.getAttribute("data-lzd-history-index");
+    var index = rawIndex == null ? -1 : Number(rawIndex);
+    if (index < 0 || !conversation[index]) return;
+    conversation[index].text = bubble.textContent || "";
+    saveConversation();
   }
 
   function injectStyles() {
@@ -272,6 +316,12 @@
     #lzd24-call-cancel { background:#fff; color:var(--lzd-accent); border:1px solid var(--lzd-accent); }
     #lzd24-history-view { flex-direction:column; padding:22px; background:var(--lzd-dark); color:#fff; }
     #lzd24-history-view p { margin:34px 0 0; color:rgba(226,232,240,.68); font-size:18px; font-weight:650; }
+    #lzd24-history-list { margin-top:22px; display:flex; flex-direction:column; gap:10px; overflow-y:auto; padding-right:4px; }
+    .lzd-history-item { border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:10px 12px; background:rgba(255,255,255,.06); color:#f8fafc; }
+    .lzd-history-item strong { display:block; margin-bottom:5px; color:#bfdbfe; font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+    .lzd-history-item span { display:block; color:#e5eef6; font-size:14px; line-height:1.4; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .lzd-history-item.lzd-user { margin-left:34px; background:rgba(37,99,235,.28); }
+    .lzd-history-item.lzd-bot { margin-right:34px; }
 
     #lzd24-foot { flex:0 0 auto; background:var(--lzd-dark); padding: 10px 14px 14px; }
     #lzd24-disclaimer { font-size:10.5px; color:rgba(226,232,240,.48); text-align:center; padding:0 0 7px; }
@@ -342,6 +392,7 @@
 
         <div id="lzd24-history-view" class="lzd-view">
           <button class="lzd-back" type="button">${icon("back")}<span></span></button>
+          <div id="lzd24-history-list"></div>
           <p></p>
         </div>
 
@@ -399,6 +450,7 @@
     els.callText = root.querySelector("#lzd24-call-center p");
     els.callAction = root.querySelector("#lzd24-call-action");
     els.callCancel = root.querySelector("#lzd24-call-cancel");
+    els.historyList = root.querySelector("#lzd24-history-list");
     els.historyEmpty = root.querySelector("#lzd24-history-view p");
 
     wireEvents();
@@ -415,6 +467,31 @@
         showView("chat");
         sendUserText(button.getAttribute("data-text") || "");
       });
+    });
+  }
+
+  function renderConversation() {
+    renderWelcome();
+    conversation.forEach(function (message) {
+      addMessage(message.who, message.text, null, { persist: false });
+    });
+    scrollBottom();
+  }
+
+  function renderHistory() {
+    if (!els.historyList) return;
+    els.historyList.innerHTML = "";
+    if (!conversation.length) {
+      els.historyEmpty.style.display = "block";
+      return;
+    }
+    els.historyEmpty.style.display = "none";
+    conversation.slice(-30).forEach(function (message) {
+      var item = document.createElement("div");
+      item.className = "lzd-history-item lzd-" + message.who;
+      var who = message.who === "user" ? (lang === "de" ? "Sie" : "You") : "Ginie";
+      item.innerHTML = "<strong>" + esc(who) + "</strong><span>" + esc(message.text) + "</span>";
+      els.historyList.appendChild(item);
     });
   }
 
@@ -446,7 +523,7 @@
         lang = b.getAttribute("data-lang") === "en" ? "en" : "de";
         greetedOnce = false;
         applyLang();
-        renderWelcome();
+        renderConversation();
       });
     });
   }
@@ -472,6 +549,7 @@
   }
 
   function showView(view) {
+    if (view === "history") renderHistory();
     els.panel.setAttribute("data-view", view);
   }
 
@@ -481,7 +559,7 @@
     els.bubble.style.display = "none";
     showView("chat");
     if (!greetedOnce) {
-      renderWelcome();
+      renderConversation();
       greetedOnce = true;
     }
     setTimeout(function () { els.input.focus(); }, 60);
@@ -494,7 +572,8 @@
     els.bubble.style.display = "flex";
   }
 
-  function addMessage(who, text, sources) {
+  function addMessage(who, text, sources, options) {
+    options = options || {};
     var wrap = document.createElement("div");
     wrap.className = "lzd-msg lzd-" + who;
     var bubble = document.createElement("div");
@@ -503,6 +582,7 @@
     wrap.appendChild(bubble);
     if (CONFIG.showSources && sources && sources.length) addSources(bubble, sources);
     els.msgs.appendChild(wrap);
+    if (options.persist !== false) persistMessage(who, text || "", bubble);
     scrollBottom();
     return bubble;
   }
@@ -558,6 +638,7 @@
 
   function appendToken(bubble, token) {
     bubble.textContent += token;
+    updateStoredMessage(bubble);
     scrollBottom();
   }
 

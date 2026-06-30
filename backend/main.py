@@ -139,30 +139,34 @@ _INFO_INTENT = re.compile(
 
 _SHORT_NON_PRODUCT = re.compile(r"^[a-zäöüß\s'.!?-]{1,12}$", re.IGNORECASE)
 
+_SUPPORT_PATTERNS = {
+    "en": [
+        ("key_not_received", r"license\s+key\s+not\s+received|key\s+not\s+received|not\s+received"),
+        ("key_not_working", r"license\s+key\s+does\s+not\s+work|key\s+does\s+not\s+work|activation|doesn'?t\s+work"),
+        ("installation", r"help\s+with\s+installation|installation|install"),
+        ("invoice", r"help\s+with\s+invoice|invoice|billing|rechnung"),
+        ("consultation", r"consultation|license\s+advice|quote\s+request|request\s+a\s+quote|get\s+a\s+quote"),
+        ("complaint", r"complaint|return|refund|contact\s+support|contact\s+request"),
+    ],
+    "de": [
+        ("key_not_received", r"lizenzschlüssel\s+nicht\s+erhalten|lizenzschluessel\s+nicht\s+erhalten|key\s+nicht\s+erhalten|nicht\s+erhalten"),
+        ("key_not_working", r"lizenzschlüssel\s+funktioniert\s+nicht|lizenzschluessel\s+funktioniert\s+nicht|aktivierung|funktioniert\s+nicht"),
+        ("installation", r"hilfe\s+bei\s+installation|installation|installieren"),
+        ("invoice", r"hilfe\s+mit\s+rechnung|rechnung|zahlung"),
+        ("consultation", r"beratung|lizenzberatung|angebotsanfrage|angebot\s+(anfragen|bekommen|erhalten)|kostenvoranschlag"),
+        ("complaint", r"reklamation|beschwerde|retoure|rückgabe|widerruf|support\s+kontaktieren|kontakt\s+aufnehmen"),
+    ],
+}
 
-def support_intent(text: str, lang: str) -> str | None:
+
+def support_intent(text: str, lang: str | None = None) -> str | None:
     lowered = text.lower()
-    if lang == "en":
-        patterns = [
-            ("key_not_received", r"license\s+key\s+not\s+received|key\s+not\s+received|not\s+received"),
-            ("key_not_working", r"license\s+key\s+does\s+not\s+work|key\s+does\s+not\s+work|activation|doesn'?t\s+work"),
-            ("installation", r"help\s+with\s+installation|installation|install"),
-            ("invoice", r"help\s+with\s+invoice|invoice|billing|rechnung"),
-            ("consultation", r"consultation|license\s+advice|quote\s+request|request\s+a\s+quote|get\s+a\s+quote"),
-            ("complaint", r"complaint|return|refund|contact\s+support|contact\s+request"),
-        ]
-    else:
-        patterns = [
-            ("key_not_received", r"lizenzschlüssel\s+nicht\s+erhalten|key\s+nicht\s+erhalten|nicht\s+erhalten"),
-            ("key_not_working", r"lizenzschlüssel\s+funktioniert\s+nicht|aktivierung|funktioniert\s+nicht"),
-            ("installation", r"hilfe\s+bei\s+installation|installation|installieren"),
-            ("invoice", r"hilfe\s+mit\s+rechnung|rechnung|zahlung"),
-            ("consultation", r"beratung|lizenzberatung|angebotsanfrage|angebot\s+(anfragen|bekommen|erhalten)|kostenvoranschlag"),
-            ("complaint", r"reklamation|beschwerde|retoure|rückgabe|widerruf|support\s+kontaktieren|kontakt\s+aufnehmen"),
-        ]
-    for intent, pattern in patterns:
-        if re.search(pattern, lowered, re.IGNORECASE):
-            return intent
+    ordered_langs = [lang] if lang in ("de", "en") else []
+    ordered_langs.extend(candidate for candidate in ("de", "en") if candidate not in ordered_langs)
+    for candidate_lang in ordered_langs:
+        for intent, pattern in _SUPPORT_PATTERNS[candidate_lang]:
+            if re.search(pattern, lowered, re.IGNORECASE):
+                return intent
     return None
 
 
@@ -246,7 +250,11 @@ def contact_reply(lang: str, intent: str | None = None) -> str:
 
 
 def is_contact_intent(text: str, lang: str) -> bool:
-    return bool(_CONTACT_INTENT[lang].search(text)) or support_intent(text, lang) is not None
+    return (
+        bool(_CONTACT_INTENT["de"].search(text))
+        or bool(_CONTACT_INTENT["en"].search(text))
+        or support_intent(text, lang) is not None
+    )
 
 
 def is_greeting(text: str) -> bool:
@@ -436,6 +444,15 @@ _DE_HINTS = {
     "der", "die", "das", "und", "ich", "ist", "nicht", "mit", "für", "ein",
     "eine", "wie", "was", "kann", "gibt", "haben", "kaufen", "kosten", "preis",
     "lizenz", "wie viel", "wieviel", "günstig", "verfügbar", "welche", "wo",
+    "hilfe", "rechnung", "beratung", "angebot", "lizenzschlüssel",
+    "lizenzschluessel", "funktioniert", "erhalten", "installieren", "zahlung",
+}
+_EN_HINTS = {
+    "the", "and", "is", "are", "do", "does", "how", "what", "can", "i",
+    "you", "price", "cost", "buy", "license", "available", "which", "where",
+    "help", "invoice", "billing", "consultation", "quote", "received", "work",
+    "working", "installation", "install", "key", "cheapest", "cheap", "less",
+    "expensive", "president",
 }
 
 
@@ -446,13 +463,29 @@ def detect_lang(text: str) -> str:
         return "de"
     words = set(re.findall(r"[a-zäöüß]+", lowered))
     de_hits = len(words & _DE_HINTS)
-    en_hits = len(words & {
-        "the", "and", "is", "are", "do", "does", "how", "what", "can", "i",
-        "you", "price", "cost", "buy", "license", "available", "which", "where",
-    })
+    en_hits = len(words & _EN_HINTS)
     if en_hits > de_hits:
         return "en"
     return "de"
+
+
+def has_language_signal(text: str, lang: str) -> bool:
+    lowered = text.lower()
+    if lang == "de" and re.search(r"[äöüß]", lowered):
+        return True
+    words = set(re.findall(r"[a-zäöüß]+", lowered))
+    hints = _DE_HINTS if lang == "de" else _EN_HINTS
+    return bool(words & hints)
+
+
+def resolve_lang(requested: str | None, text: str) -> str:
+    """Prefer the user's typed language when it is clear; otherwise use the UI toggle."""
+    detected = detect_lang(text)
+    if requested in ("de", "en"):
+        if detected != requested and has_language_signal(text, detected):
+            return detected
+        return requested
+    return detected
 
 
 # --- Gemini calls ------------------------------------------------------------
@@ -660,7 +693,7 @@ async def health() -> dict:
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest) -> ChatResponse:
     message = req.message.strip()
-    lang = req.lang if req.lang in ("de", "en") else detect_lang(message)
+    lang = resolve_lang(req.lang, message)
 
     if is_greeting(message):
         return ChatResponse(answer=GREETING_REPLY[lang], sources=[])
@@ -718,7 +751,7 @@ async def chat(req: ChatRequest) -> ChatResponse:
 @app.post("/chat/stream")
 async def chat_stream(req: ChatRequest) -> StreamingResponse:
     message = req.message.strip()
-    lang = req.lang if req.lang in ("de", "en") else detect_lang(message)
+    lang = resolve_lang(req.lang, message)
 
     async def events():
         if is_greeting(message):
