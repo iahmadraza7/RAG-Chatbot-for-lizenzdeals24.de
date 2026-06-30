@@ -48,6 +48,9 @@ SUPABASE_KEY = _env("SUPABASE_KEY")
 # --- Retrieval tuning -------------------------------------------------------
 TOP_K = int(_env("TOP_K", "5"))
 MIN_SIMILARITY = float(_env("MIN_SIMILARITY", "0.64"))
+# Guardrail: values below this make unrelated short/support messages match
+# random products. Render env can still be higher, but not dangerously lower.
+EFFECTIVE_MIN_SIMILARITY = max(MIN_SIMILARITY, float(_env("MIN_EFFECTIVE_SIMILARITY", "0.64")))
 
 # --- Support routing --------------------------------------------------------
 SUPPORT_EMAIL = _env("SUPPORT_EMAIL", "support@lizenzdeals24.de")

@@ -61,7 +61,9 @@ SYSTEM_PROMPT = (
     "suggest contacting support — do NOT guess or invent products, prices, "
     "keys, or policies. Reply in the requested answer language even if the "
     "context is in another language; keep official product names unchanged. "
-    "Be concise and accurate. NEVER ask for or process personal data like "
+    "Be concise and accurate, but include the complete useful answer from the "
+    "available context, including product name and price when present. "
+    "NEVER ask for or process personal data like "
     "names, emails, order numbers, or payment info in this chat."
 )
 
@@ -101,13 +103,17 @@ _GREETING_INTENT = re.compile(
 _CONTACT_INTENT = {
     "de": re.compile(
         r"\b(angebotsanfrage|angebot\s+(anfragen|bekommen|erhalten)|"
-        r"kostenvoranschlag|reklamation|beschwerde|retoure|rückgabe|"
-        r"widerruf|support\s+kontaktieren|kontakt\s+aufnehmen)\b",
+        r"kostenvoranschlag|beratung|lizenzberatung|reklamation|beschwerde|"
+        r"retoure|rückgabe|widerruf|support\s+kontaktieren|kontakt\s+aufnehmen|"
+        r"lizenzschlüssel\s+(nicht\s+erhalten|funktioniert\s+nicht)|"
+        r"hilfe\s+bei\s+installation|hilfe\s+mit\s+rechnung)\b",
         re.IGNORECASE,
     ),
     "en": re.compile(
         r"\b(quote\s+request|request\s+a\s+quote|get\s+a\s+quote|"
-        r"complaint|return|refund|contact\s+support|contact\s+request)\b",
+        r"consultation|license\s+advice|complaint|return|refund|"
+        r"contact\s+support|contact\s+request|license\s+key\s+(not\s+received|does\s+not\s+work)|"
+        r"help\s+with\s+installation|help\s+with\s+invoice)\b",
         re.IGNORECASE,
     ),
 }
@@ -116,6 +122,9 @@ _PRICE_INTENT = re.compile(
     r"\b(kostet|kosten|preis|wieviel|wie\s+viel|price|cost|how\s+much)\b",
     re.IGNORECASE,
 )
+
+
+_SHORT_NON_PRODUCT = re.compile(r"^[a-zäöüß\s'.!?-]{1,12}$", re.IGNORECASE)
 
 
 def contact_reply(lang: str) -> str:
@@ -145,6 +154,14 @@ def is_contact_intent(text: str, lang: str) -> bool:
 
 def is_greeting(text: str) -> bool:
     return bool(_GREETING_INTENT.search(text))
+
+
+def is_too_short_for_product_search(text: str) -> bool:
+    """Avoid embedding vague fragments like 'I do' into unrelated products."""
+    stripped = text.strip()
+    if _PRICE_INTENT.search(stripped):
+        return False
+    return bool(_SHORT_NON_PRODUCT.match(stripped)) and len(re.findall(r"[a-zäöüß]+", stripped.lower())) <= 3
 
 
 def _match_price(match: dict) -> str:
@@ -283,7 +300,7 @@ def build_generation_payload(message: str, context: str, lang: str) -> dict:
         "generationConfig": {
             "temperature": 0.2,
             "topP": 0.9,
-            "maxOutputTokens": 600,
+            "maxOutputTokens": 900,
         },
     }
 
@@ -404,7 +421,7 @@ async def prepare_context(message: str, lang: str) -> tuple[str | None, list[dic
     embedding = await embed_query(message)
     matches = await search_products(embedding, config.TOP_K)
     top_score = matches[0]["similarity"] if matches else None
-    good = [m for m in matches if m.get("similarity", 0) >= config.MIN_SIMILARITY]
+    good = [m for m in matches if m.get("similarity", 0) >= config.EFFECTIVE_MIN_SIMILARITY]
     if not good:
         await log_unanswered(message, lang, top_score)
         return None, [], top_score
@@ -457,6 +474,9 @@ async def chat(req: ChatRequest) -> ChatResponse:
     if is_contact_intent(message, lang):
         return ChatResponse(answer=contact_reply(lang), sources=[])
 
+    if is_too_short_for_product_search(message):
+        return ChatResponse(answer=NO_CONTEXT[lang], sources=[])
+
     # 1. Embed + retrieve.
     try:
         context, good, _top_score = await prepare_context(message, lang)
@@ -471,7 +491,14 @@ async def chat(req: ChatRequest) -> ChatResponse:
     if context is None:
         return ChatResponse(answer=NO_CONTEXT[lang], sources=[])
 
-    # 3. Build CONTEXT from the good matches and ask the LLM.
+    # 3. Price questions can be answered deterministically from catalog
+    # metadata. This is faster and safer than asking the LLM to rephrase.
+    if _PRICE_INTENT.search(message):
+        direct_answer = catalog_fallback_answer(message, good, lang)
+        if direct_answer:
+            return ChatResponse(answer=direct_answer, sources=build_sources(good))
+
+    # 4. Build CONTEXT from the good matches and ask the LLM.
     try:
         answer = await generate_answer(message, context, lang)
     except RateLimited:
@@ -509,6 +536,11 @@ async def chat_stream(req: ChatRequest) -> StreamingResponse:
             yield sse("done", {})
             return
 
+        if is_too_short_for_product_search(message):
+            yield sse("answer", {"answer": NO_CONTEXT[lang], "sources": []})
+            yield sse("done", {})
+            return
+
         try:
             context, good, _top_score = await prepare_context(message, lang)
         except (RuntimeError, httpx.HTTPStatusError):
@@ -522,6 +554,16 @@ async def chat_stream(req: ChatRequest) -> StreamingResponse:
             return
 
         sources = [s.model_dump() for s in build_sources(good)]
+
+        if _PRICE_INTENT.search(message):
+            direct_answer = catalog_fallback_answer(message, good, lang)
+            if direct_answer:
+                for chunk in token_chunks(direct_answer):
+                    yield sse("token", {"text": chunk})
+                yield sse("sources", {"sources": sources})
+                yield sse("done", {})
+                return
+
         api_key = config.require_gemini()
         url = (f"{config.GEMINI_BASE}/models/{config.GEMINI_CHAT_MODEL}"
                f":streamGenerateContent?alt=sse&key={api_key}")

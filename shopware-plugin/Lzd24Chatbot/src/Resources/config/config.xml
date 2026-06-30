@@ -100,14 +100,14 @@
             <name>accentColor</name>
             <label>Button accent color</label>
             <label lang="de-DE">Button-Akzentfarbe</label>
-            <defaultValue>#9ad72d</defaultValue>
+            <defaultValue>#2563eb</defaultValue>
         </input-field>
 
         <input-field type="text">
             <name>primaryColorDark</name>
             <label>Header dark color</label>
             <label lang="de-DE">Dunkle Kopfzeilenfarbe</label>
-            <defaultValue>#173f46</defaultValue>
+            <defaultValue>#0f1e3d</defaultValue>
         </input-field>
 
         <input-field type="text">

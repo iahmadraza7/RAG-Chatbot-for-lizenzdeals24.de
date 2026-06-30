@@ -13,10 +13,12 @@ Completed:
 - Shopware plugin scaffold with admin configuration fields.
 - GTM Custom HTML fallback snippet.
 - Public Render backend live at `https://lzd24-chat-api.onrender.com`.
-- Updated professional widget package `build/Lzd24Chatbot.zip` version `1.1.0`.
+- Updated professional widget package `build/Lzd24Chatbot.zip` version `1.2.0`.
 - Streaming chat endpoint `/chat/stream` for faster visible responses, with `/chat` fallback.
 - Client avatar image configured from Shopware media URL.
 - Bottom offset configured so the widget does not cover the Trustsiegel.
+- Blue LizenzDeals24 theme applied instead of competitor-style green buttons.
+- Anti-hallucination gate hardened so low-confidence questions do not return random products.
 
 Not part of Milestone 1 / requires next access:
 

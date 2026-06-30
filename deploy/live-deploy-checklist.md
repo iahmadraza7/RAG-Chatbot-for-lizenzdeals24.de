@@ -52,6 +52,7 @@ STORE_API_KEY=<from backend/.env>
 ALLOWED_ORIGINS=https://lizenzdeals24.de,https://www.lizenzdeals24.de,https://lizenzdeals24.com,https://lizenzdeals24.es,https://lizenzdeals24.fr
 TOP_K=5
 MIN_SIMILARITY=0.64
+MIN_EFFECTIVE_SIMILARITY=0.64
 SUPPORT_EMAIL=support@lizenzdeals24.de
 WHATSAPP_URL=
 ```
@@ -121,11 +122,12 @@ build/Lzd24Chatbot.zip
 Current fixed package:
 
 ```text
-Ginie Chatbot / Lzd24Chatbot version 1.1.0
+Ginie Chatbot / Lzd24Chatbot version 1.2.0
 ```
 
-This version contains the professional dark chat design, the client avatar,
-streaming responses, cache-busted widget asset, and trust-badge offset.
+This version contains the professional dark blue chat design, the client avatar,
+streaming responses, cache-busted widget asset, trust-badge offset, and stricter
+anti-hallucination handling.
 
 ### A1 - Upload Extension
 
@@ -229,8 +231,8 @@ English greeting: We are online for you.
 Support email: support@lizenzdeals24.de
 WhatsApp link: leave empty until client gives real wa.me link
 Primary color: #1d4ed8
-Button accent color: #9ad72d
-Header dark color: #173f46
+Button accent color: #2563eb
+Header dark color: #0f1e3d
 Default language: de
 Launcher bottom offset: 112
 Launcher right offset: 20
@@ -275,7 +277,7 @@ Clear and warm up caches
 After cache clear, open this URL in a browser:
 
 ```text
-https://lizenzdeals24.de/bundles/lzd24chatbot/widget/widget.js?v=1.1.0
+https://lizenzdeals24.de/bundles/lzd24chatbot/widget/widget.js?v=1.2.0
 ```
 
 Search on the page with `Ctrl + F`:
@@ -289,7 +291,7 @@ If you find this text, the new professional widget is live.
 If you still see the old simple widget code with only `Wir sind online für Sie.`
 and no `Unsere Experten sind online!`, Shopware is still serving old plugin
 assets. Upload/update the `build/Lzd24Chatbot.zip` again, confirm version
-`1.1.0`, then clear cache again.
+`1.2.0`, then clear cache again.
 
 ### A5 - Check Live Storefront
 
