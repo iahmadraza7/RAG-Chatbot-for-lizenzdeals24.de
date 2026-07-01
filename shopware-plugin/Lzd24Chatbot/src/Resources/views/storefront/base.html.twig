@@ -22,12 +22,12 @@
                 whatsappUrl: "{{ config('Lzd24Chatbot.config.whatsappUrl')|e('js') }}",
                 telUrl: "{{ config('Lzd24Chatbot.config.telUrl')|e('js') }}",
                 contactUrl: "{{ config('Lzd24Chatbot.config.contactUrl')|e('js') }}",
-                offsetBottom: {{ config('Lzd24Chatbot.config.offsetBottom')|default(112) }},
+                offsetBottom: {{ config('Lzd24Chatbot.config.offsetBottom')|default(210) }},
                 offsetRight: {{ config('Lzd24Chatbot.config.offsetRight')|default(20) }},
                 greetingDE: "{{ config('Lzd24Chatbot.config.greetingDE')|e('js') }}",
                 greetingEN: "{{ config('Lzd24Chatbot.config.greetingEN')|e('js') }}"
             });
         </script>
-        <script src="{{ asset('bundles/lzd24chatbot/widget/widget.js') }}?v=1.4.0" defer></script>
+        <script src="{{ asset('bundles/lzd24chatbot/widget/widget.js') }}?v=1.5.0" defer></script>
     {% endif %}
 {% endblock %}

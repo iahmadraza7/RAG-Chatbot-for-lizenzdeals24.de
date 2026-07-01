@@ -33,7 +33,7 @@
         { icon: "receipt", text: "Help with invoice" },
         { icon: "chat", text: "Consultation" },
       ],
-      offsetBottom: 112,
+      offsetBottom: 210,
       offsetRight: 24,
       supportEmail: "support@lizenzdeals24.de",
       contactUrl: "/kontakt",
@@ -61,6 +61,10 @@
   var greetedOnce = false;
   var activeController = null;
   var conversation = loadConversation();
+  var configuredBottom = Number(CONFIG.offsetBottom);
+  var desktopBottom = Math.max(Number.isFinite(configuredBottom) && configuredBottom > 0 ? configuredBottom : 0, 210);
+  var configuredRight = Number(CONFIG.offsetRight);
+  var desktopRight = Number.isFinite(configuredRight) && configuredRight > 0 ? configuredRight : 24;
 
   var I18N = {
     de: {
@@ -218,8 +222,8 @@
       --lzd-accent: ${CONFIG.accentColor || "#2563eb"};
       --lzd-muted: rgba(226, 232, 240, .72);
       position: fixed;
-      bottom: ${Number(CONFIG.offsetBottom) || 112}px;
-      right: ${Number(CONFIG.offsetRight) || 24}px;
+      bottom: ${desktopBottom}px;
+      right: ${desktopRight}px;
       z-index: 2147483000;
       font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       color: #f8fafc;
@@ -256,7 +260,7 @@
     @keyframes lzd-pop { from { opacity:0; transform:translateY(12px) scale(.98);} to { opacity:1; transform:none; } }
 
     #lzd24-panel {
-      position:absolute; bottom:0; right:0; width:410px; max-width:calc(100vw - 24px); height:660px; max-height:calc(100vh - 30px);
+      position:absolute; bottom:0; right:0; width:410px; max-width:calc(100vw - 24px); height:660px; max-height:calc(100vh - ${desktopBottom + 20}px);
       display:none; flex-direction:column; overflow:hidden; background:var(--lzd-dark); color:#fff;
       border-radius:18px; box-shadow:0 24px 70px rgba(2,6,23,.38); border:1px solid rgba(255,255,255,.1);
     }
@@ -333,9 +337,31 @@
     #lzd24-sendbtn:disabled { opacity:.6; cursor:default; }
 
     @media (max-width: 480px) {
-      #lzd24-root { right: 10px; bottom: 10px; }
-      #lzd24-panel { position:fixed; inset:0; width:auto; height:auto; max-width:none; max-height:none; border-radius:0; }
-      #lzd24-greet { width: calc(100vw - 20px); }
+      #lzd24-root { right: 12px; bottom: max(96px, calc(env(safe-area-inset-bottom) + 96px)); }
+      #lzd24-panel {
+        position:fixed; left:8px; right:8px; top:max(8px, env(safe-area-inset-top)); bottom:max(8px, env(safe-area-inset-bottom));
+        width:auto; height:auto; max-width:none; max-height:none; border-radius:16px;
+      }
+      @supports (height: 100dvh) {
+        #lzd24-panel { height: calc(100dvh - 16px); bottom:auto; }
+      }
+      #lzd24-header { min-height:52px; padding:9px 10px 6px; gap:6px; }
+      #lzd24-header-title { font-size:14px; }
+      .lzd-icon-btn { width:30px; height:30px; }
+      .lzd-lang button { padding:4px 6px; font-size:10px; }
+      #lzd24-hero { min-height:138px; padding:4px 16px 10px; }
+      #lzd24-brand { font-size:22px; margin:8px 0 7px; }
+      #lzd24-hero h2 { max-width:190px; font-size:22px; }
+      #lzd24-hero p { max-width:205px; margin-top:8px; font-size:14px; }
+      #lzd24-hero-avatar { right:16px; top:38px; width:78px; height:78px; }
+      #lzd24-hero-status { right:20px; top:39px; }
+      #lzd24-msgs { padding:0 16px 10px; }
+      #lzd24-welcome-title { font-size:18px; margin:8px 0 10px; }
+      .lzd-chip { min-height:39px; font-size:14px; gap:10px; }
+      .lzd-bubble-msg { max-width:88%; font-size:14px; }
+      #lzd24-foot { padding:8px 10px 10px; }
+      #lzd24-input { font-size:15px; }
+      #lzd24-greet { width: min(330px, calc(100vw - 24px)); }
       #lzd24-bubble { width:62px; height:62px; }
       #lzd24-bubble img { width:54px; height:54px; }
     }
