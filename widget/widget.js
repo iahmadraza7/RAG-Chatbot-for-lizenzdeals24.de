@@ -81,8 +81,8 @@
       noHistory: "Du hast keine frueheren Chats.",
       back: "Zurück",
       introKicker: "LizenzDeals24",
-      introTitle: "Hi, ich bin Ginie.",
-      introText: "Sag mir einfach, wie ich dir helfen kann!",
+      introTitle: "Willkommen bei LizenzDeals24! Ich bin Ginie.",
+      introText: "Frag mich einfach - ich helfe dir gerne weiter.",
       welcomeTitle: "Hallo! Wie können wir Ihnen helfen?",
       placeholder: "Schreibe eine Nachricht...",
       send: "Senden",
@@ -108,8 +108,8 @@
       noHistory: "You have no previous chats.",
       back: "Back",
       introKicker: "LizenzDeals24",
-      introTitle: "Hi, I am Ginie.",
-      introText: "Tell me how I can help you.",
+      introTitle: "Welcome to LizenzDeals24! I am Ginie.",
+      introText: "Just ask me - I am happy to help.",
       welcomeTitle: "Hello! How can we help you?",
       placeholder: "Write a message...",
       send: "Send",
@@ -284,7 +284,7 @@
     #lzd24-hero { flex:0 0 auto; position:relative; padding: 6px 22px 14px; min-height:166px; }
     #lzd24-brand { font-size:26px; line-height:1; font-weight:950; letter-spacing:.2px; color:#fff; margin:10px 0 8px; }
     #lzd24-brand span { color:var(--lzd-accent); }
-    #lzd24-hero h2 { margin:0; max-width:245px; font-size:25px; line-height:1.12; color:#fff; font-weight:900; }
+    #lzd24-hero h2 { margin:0; max-width:230px; font-size:23px; line-height:1.12; color:#fff; font-weight:900; }
     #lzd24-hero h2 span { color:var(--lzd-accent); display:block; }
     #lzd24-hero p { max-width:250px; margin:10px 0 0; color:#f1f5f9; font-size:15px; line-height:1.32; font-weight:650; }
     #lzd24-hero-avatar { position:absolute; right:18px; top:40px; width:104px; height:104px; border-radius:50%; background:#fff; object-fit:cover; object-position:center; box-shadow:0 18px 34px rgba(0,0,0,.18); }
@@ -352,7 +352,7 @@
       .lzd-lang button { padding:4px 6px; font-size:10px; }
       #lzd24-hero { min-height:138px; padding:4px 16px 10px; }
       #lzd24-brand { font-size:22px; margin:8px 0 7px; }
-      #lzd24-hero h2 { max-width:190px; font-size:22px; }
+      #lzd24-hero h2 { max-width:185px; font-size:20px; }
       #lzd24-hero p { max-width:205px; margin-top:8px; font-size:14px; }
       #lzd24-hero-avatar { right:16px; top:38px; width:78px; height:78px; }
       #lzd24-hero-status { right:20px; top:39px; }
