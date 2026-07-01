@@ -33,7 +33,7 @@
         { icon: "receipt", text: "Help with invoice" },
         { icon: "chat", text: "Consultation" },
       ],
-      offsetBottom: 90,
+      offsetBottom: 45,
       offsetRight: 24,
       supportEmail: "support@lizenzdeals24.de",
       contactUrl: "/kontakt",
@@ -62,10 +62,10 @@
   var activeController = null;
   var conversation = loadConversation();
   var configuredBottom = Number(CONFIG.offsetBottom);
-  var desktopBottom = Math.max(Number.isFinite(configuredBottom) && configuredBottom > 0 ? configuredBottom : 0, 90);
+  var desktopBottom = Number.isFinite(configuredBottom) && configuredBottom > 0 ? configuredBottom : 45;
   var configuredRight = Number(CONFIG.offsetRight);
   var desktopRight = Number.isFinite(configuredRight) && configuredRight > 0 ? configuredRight : 24;
-  var mobileBottom = Math.max(desktopBottom, 90);
+  var mobileBottom = desktopBottom;
 
   var I18N = {
     de: {

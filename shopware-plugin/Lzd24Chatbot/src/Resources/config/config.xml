@@ -123,7 +123,7 @@
             <name>offsetBottom</name>
             <label>Launcher bottom offset</label>
             <label lang="de-DE">Launcher Abstand unten</label>
-            <defaultValue>90</defaultValue>
+            <defaultValue>45</defaultValue>
         </input-field>
 
         <input-field type="int">
