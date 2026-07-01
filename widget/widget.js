@@ -43,6 +43,7 @@
       disclaimerEN: "Please do not enter personal data.",
       showGreetingPopup: true,
       greetingDelayMs: 650,
+      greetingDismissHours: 24,
       showSources: false,
       maxSourceNames: 2,
       stream: true,
@@ -66,6 +67,8 @@
   var configuredRight = Number(CONFIG.offsetRight);
   var desktopRight = Number.isFinite(configuredRight) && configuredRight > 0 ? configuredRight : 24;
   var mobileBottom = desktopBottom;
+  var GREET_SHOWN_SESSION_KEY = "lzd24_greet_shown_session";
+  var GREET_DISMISSED_KEY = "lzd24_greet_dismissed";
 
   var I18N = {
     de: {
@@ -194,6 +197,58 @@
     } catch (_) {
       // Browser storage can be disabled; the chat must still work normally.
     }
+  }
+
+  function getSessionFlag(key) {
+    try {
+      return window.sessionStorage ? window.sessionStorage.getItem(key) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function setSessionFlag(key, value) {
+    try {
+      if (window.sessionStorage) window.sessionStorage.setItem(key, value);
+    } catch (_) {
+      // Storage can be disabled; ignore and keep the widget usable.
+    }
+  }
+
+  function getLocalFlag(key) {
+    try {
+      return window.localStorage ? window.localStorage.getItem(key) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function setLocalFlag(key, value) {
+    try {
+      if (window.localStorage) window.localStorage.setItem(key, value);
+    } catch (_) {
+      // Storage can be disabled; ignore and keep the widget usable.
+    }
+  }
+
+  function hasGreetingShownThisSession() {
+    return getSessionFlag(GREET_SHOWN_SESSION_KEY) === "1";
+  }
+
+  function markGreetingShownThisSession() {
+    setSessionFlag(GREET_SHOWN_SESSION_KEY, "1");
+  }
+
+  function isGreetingDismissed() {
+    var timestamp = Number(getLocalFlag(GREET_DISMISSED_KEY));
+    var hours = Number(CONFIG.greetingDismissHours);
+    var ttl = (Number.isFinite(hours) && hours > 0 ? hours : 24) * 3600000;
+    return timestamp > 0 && Date.now() - timestamp < ttl;
+  }
+
+  function dismissGreetingPopup() {
+    els.greet.style.display = "none";
+    setLocalFlag(GREET_DISMISSED_KEY, String(Date.now()));
   }
 
   function persistMessage(who, text, bubble) {
@@ -526,7 +581,7 @@
     els.bubble.addEventListener("click", openPanel);
     els.start.addEventListener("click", openPanel);
     els.close.addEventListener("click", closePanel);
-    els.decline.addEventListener("click", function () { els.greet.style.display = "none"; });
+    els.decline.addEventListener("click", dismissGreetingPopup);
     els.menu.addEventListener("click", function () { showView("history"); });
     els.history.addEventListener("click", function () { showView("history"); });
     els.phone.addEventListener("click", function () { showView("call"); });
@@ -769,9 +824,12 @@
   function init() {
     injectStyles();
     build();
-    if (CONFIG.showGreetingPopup) {
+    if (CONFIG.showGreetingPopup && !hasGreetingShownThisSession() && !isGreetingDismissed()) {
       setTimeout(function () {
-        if (!els.panel.classList.contains("lzd-open")) els.greet.style.display = "block";
+        if (!els.panel.classList.contains("lzd-open") && !hasGreetingShownThisSession() && !isGreetingDismissed()) {
+          els.greet.style.display = "block";
+          markGreetingShownThisSession();
+        }
       }, CONFIG.greetingDelayMs);
     }
   }
