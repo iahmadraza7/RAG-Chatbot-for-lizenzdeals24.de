@@ -47,14 +47,17 @@ SUPABASE_KEY = _env("SUPABASE_KEY")
 
 # --- Retrieval tuning -------------------------------------------------------
 TOP_K = int(_env("TOP_K", "5"))
-MIN_SIMILARITY = float(_env("MIN_SIMILARITY", "0.64"))
-# Guardrail: values below this make unrelated short/support messages match
-# random products. Render env can still be higher, but not dangerously lower.
-EFFECTIVE_MIN_SIMILARITY = max(MIN_SIMILARITY, float(_env("MIN_EFFECTIVE_SIMILARITY", "0.64")))
+MIN_SIMILARITY = float(_env("MIN_SIMILARITY", "0.45"))
+# Optional override for production. If omitted, the configured MIN_SIMILARITY is
+# used directly so lowering the threshold actually takes effect.
+EFFECTIVE_MIN_SIMILARITY = float(_env("MIN_EFFECTIVE_SIMILARITY", str(MIN_SIMILARITY)))
 
 # --- Support routing --------------------------------------------------------
 SUPPORT_EMAIL = _env("SUPPORT_EMAIL", "support@lizenzdeals24.de")
 WHATSAPP_URL = _env("WHATSAPP_URL")
+WHATSAPP_NUMBER = _env("WHATSAPP_NUMBER")
+EMAIL_API_KEY = _env("EMAIL_API_KEY")
+EMAIL_FROM = _env("EMAIL_FROM", f"LizenzDeals24 <{SUPPORT_EMAIL}>")
 
 # --- CORS -------------------------------------------------------------------
 ALLOWED_ORIGINS = [
@@ -77,6 +80,10 @@ def require_supabase() -> tuple[str, str]:
 
 def require_store() -> tuple[str, str]:
     return _require("STORE_API_URL").rstrip("/"), _require("STORE_API_KEY")
+
+
+def require_email_api_key() -> str:
+    return _require("EMAIL_API_KEY")
 
 
 def supabase_headers(key: str) -> dict[str, str]:

@@ -19,7 +19,19 @@ services:
         sync: false
       - key: STORE_API_KEY
         sync: false
+      - key: EMAIL_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: SUPPORT_EMAIL
+        value: support@lizenzdeals24.de
+      - key: WHATSAPP_NUMBER
+        sync: false
       - key: ALLOWED_ORIGINS
         sync: false
+      - key: MIN_SIMILARITY
+        value: "0.45"
+      - key: MIN_EFFECTIVE_SIMILARITY
+        value: "0.45"
       - key: PYTHON_VERSION
         value: 3.12.8

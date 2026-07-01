@@ -76,6 +76,24 @@
         </input-field>
 
         <input-field type="text">
+            <name>whatsappNumber</name>
+            <label>WhatsApp number</label>
+            <label lang="de-DE">WhatsApp Nummer</label>
+            <placeholder>4921732643330</placeholder>
+            <helpText>Digits only, country code included. Used to build https://wa.me/...</helpText>
+            <helpText lang="de-DE">Nur Zahlen mit Ländervorwahl. Daraus wird https://wa.me/... erzeugt.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>contactEndpoint</name>
+            <label>Contact API URL</label>
+            <label lang="de-DE">Kontakt API URL</label>
+            <placeholder>https://your-api-host/contact</placeholder>
+            <helpText>Optional. If empty, the widget derives /contact from the backend chat URL.</helpText>
+            <helpText lang="de-DE">Optional. Leer lassen, dann wird /contact automatisch aus der Backend Chat URL abgeleitet.</helpText>
+        </input-field>
+
+        <input-field type="text">
             <name>telUrl</name>
             <label>Phone link</label>
             <label lang="de-DE">Telefon-Link</label>

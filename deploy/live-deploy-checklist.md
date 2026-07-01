@@ -51,10 +51,13 @@ STORE_API_URL=https://lizenzdeals24.de
 STORE_API_KEY=<from backend/.env>
 ALLOWED_ORIGINS=https://lizenzdeals24.de,https://www.lizenzdeals24.de,https://lizenzdeals24.com,https://lizenzdeals24.es,https://lizenzdeals24.fr
 TOP_K=5
-MIN_SIMILARITY=0.64
-MIN_EFFECTIVE_SIMILARITY=0.64
+MIN_SIMILARITY=0.45
+MIN_EFFECTIVE_SIMILARITY=0.45
 SUPPORT_EMAIL=support@lizenzdeals24.de
 WHATSAPP_URL=
+WHATSAPP_NUMBER=
+EMAIL_API_KEY=<Resend API key>
+EMAIL_FROM=LizenzDeals24 <support@lizenzdeals24.de>
 ```
 
 5. Deploy:
@@ -122,7 +125,7 @@ build/Lzd24Chatbot.zip
 Current fixed package:
 
 ```text
-Ginie Chatbot / Lzd24Chatbot version 1.3.0
+Ginie Chatbot / Lzd24Chatbot version 2.2.0
 ```
 
 This version contains the professional dark blue chat design, the client avatar,
@@ -229,12 +232,14 @@ Avatar image URL: https://lizenzdeals24.de/media/f8/33/c3/1782816369/Support%20C
 German greeting: Wir sind online für Sie
 English greeting: We are online for you.
 Support email: support@lizenzdeals24.de
-WhatsApp link: leave empty until client gives real wa.me link
+WhatsApp link: leave empty if using WhatsApp number
+WhatsApp number: 4921732643330 or client's real WhatsApp number
+Contact API URL: leave empty unless backend contact URL is different
 Primary color: #1d4ed8
 Button accent color: #2563eb
 Header dark color: #0f1e3d
 Default language: de
-Launcher bottom offset: 112
+Launcher bottom offset: 45
 Launcher right offset: 20
 ```
 
@@ -277,7 +282,7 @@ Clear and warm up caches
 After cache clear, open this URL in a browser:
 
 ```text
-https://lizenzdeals24.de/bundles/lzd24chatbot/widget/widget.js?v=1.3.0
+https://lizenzdeals24.de/bundles/lzd24chatbot/widget/widget.js?v=2.2.0
 ```
 
 Search on the page with `Ctrl + F`:
@@ -291,7 +296,7 @@ If you find this text, the new professional widget is live.
 If you still see the old simple widget code with only `Wir sind online für Sie.`
 and no `Unsere Experten sind online!`, Shopware is still serving old plugin
 assets. Upload/update the `build/Lzd24Chatbot.zip` again, confirm version
-`1.3.0`, then clear cache again.
+`2.2.0`, then clear cache again.
 
 ### A5 - Check Live Storefront
 
@@ -570,6 +575,18 @@ Expected:
 
 ```text
 Bot routes to support@lizenzdeals24.de and asks not to enter personal data.
+```
+
+Ask through quick reply:
+
+```text
+Angebot anfragen / Reklamation / Kontakt aufnehmen
+```
+
+Expected:
+
+```text
+Inline form opens and submits to /contact without sending personal data to the AI.
 ```
 
 ---

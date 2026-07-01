@@ -25,6 +25,9 @@
         { icon: "monitor", text: "Hilfe bei Installation" },
         { icon: "receipt", text: "Hilfe mit Rechnung" },
         { icon: "chat", text: "Beratung" },
+        { icon: "chat", text: "Angebot anfragen", action: "contact", kind: "angebot" },
+        { icon: "alert", text: "Reklamation", action: "contact", kind: "reklamation" },
+        { icon: "mail", text: "Kontakt aufnehmen", action: "contact", kind: "kontakt" },
       ],
       quickRepliesEN: [
         { icon: "key", text: "License key not received" },
@@ -32,13 +35,18 @@
         { icon: "monitor", text: "Help with installation" },
         { icon: "receipt", text: "Help with invoice" },
         { icon: "chat", text: "Consultation" },
+        { icon: "chat", text: "Request quote", action: "contact", kind: "angebot" },
+        { icon: "alert", text: "Complaint", action: "contact", kind: "reklamation" },
+        { icon: "mail", text: "Contact", action: "contact", kind: "kontakt" },
       ],
       offsetBottom: 45,
       offsetRight: 24,
       supportEmail: "support@lizenzdeals24.de",
       contactUrl: "/kontakt",
+      contactEndpoint: "",
       telUrl: "tel:+4921732643330",
       whatsappUrl: "",
+      whatsappNumber: "",
       disclaimerDE: "Bitte keine persönlichen Daten eingeben.",
       disclaimerEN: "Please do not enter personal data.",
       showGreetingPopup: true,
@@ -97,6 +105,21 @@
       callText: "Durch einen Anruf wird eine Konversation mit dem nächsten verfügbaren Agenten eingeleitet.",
       callButton: "Jetzt anrufen",
       cancel: "Abbrechen",
+      whatsapp: "WhatsApp öffnen",
+      contactKinds: {
+        angebot: "Angebot anfragen",
+        reklamation: "Reklamation senden",
+        kontakt: "Kontakt aufnehmen",
+      },
+      contactIntro: "Bitte senden Sie die Anfrage direkt an unser Support-Team. Diese Daten werden nicht an die KI gesendet.",
+      nameLabel: "Name",
+      emailLabel: "E-Mail",
+      productNumberLabel: "Artikelnummer (optional)",
+      messageLabel: "Nachricht",
+      submitContact: "Absenden",
+      contactSuccess: "Danke, Ihre Anfrage wurde gesendet. Unser Support meldet sich schnellstmöglich bei Ihnen.",
+      contactError: "Die Anfrage konnte nicht gesendet werden. Bitte schreiben Sie direkt an support@lizenzdeals24.de.",
+      invalidEmail: "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
     },
     en: {
       popupTitle: "Our experts are online!",
@@ -124,6 +147,21 @@
       callText: "A call starts a conversation with the next available support agent.",
       callButton: "Call now",
       cancel: "Cancel",
+      whatsapp: "Open WhatsApp",
+      contactKinds: {
+        angebot: "Request quote",
+        reklamation: "Send complaint",
+        kontakt: "Contact support",
+      },
+      contactIntro: "Please send the request directly to our support team. This data is not sent to the AI.",
+      nameLabel: "Name",
+      emailLabel: "Email",
+      productNumberLabel: "Article number (optional)",
+      messageLabel: "Message",
+      submitContact: "Send",
+      contactSuccess: "Thank you, your request has been sent. Our support team will contact you as soon as possible.",
+      contactError: "The request could not be sent. Please email support@lizenzdeals24.de directly.",
+      invalidEmail: "Please enter a valid email address.",
     },
   };
 
@@ -138,6 +176,9 @@
     monitor: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H4zM8 21h8M12 16v5"/></svg>',
     receipt: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-2-1-2 1-2-1-2 1-2-1-2 1zM9 7h6M9 11h6M9 15h4"/></svg>',
     chat: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>',
+    mail: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM4 7l8 6 8-6"/></svg>',
+    alert: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9L2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>',
+    whatsapp: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-4.1A8 8 0 1 1 20 11.5z"/><path d="M9 8.8c.3 2.4 2.1 4.2 4.4 4.8l1.4-1.2 2.1 1.1c-.2 1.2-1.2 2.1-2.4 2.1-3.5 0-7.1-3.4-7.1-7 0-1.2.9-2.2 2.1-2.4l1.1 2.1z"/></svg>',
     plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
     send: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
     headset: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13a8 8 0 0 1 16 0M4 13v4a2 2 0 0 0 2 2h1v-8H6a2 2 0 0 0-2 2zM20 13v4a2 2 0 0 1-2 2h-1v-8h1a2 2 0 0 1 2 2zM12 21h3"/></svg>',
@@ -155,6 +196,22 @@
     return CONFIG.backendUrl.replace(/\/$/, "") + "/chat/stream";
   }
 
+  function contactEndpoint() {
+    if (CONFIG.contactEndpoint) return CONFIG.contactEndpoint;
+    if (/\/chat\/?$/.test(CONFIG.backendUrl)) {
+      return CONFIG.backendUrl.replace(/\/chat\/?$/, "/contact");
+    }
+    return CONFIG.backendUrl.replace(/\/$/, "") + "/contact";
+  }
+
+  function whatsappLink() {
+    if (CONFIG.whatsappNumber) {
+      var number = String(CONFIG.whatsappNumber).replace(/[^\d]/g, "");
+      return number ? "https://wa.me/" + number : "";
+    }
+    return CONFIG.whatsappUrl || "";
+  }
+
   function esc(value) {
     return String(value == null ? "" : value)
       .replace(/&/g, "&amp;")
@@ -166,7 +223,12 @@
 
   function normalizeReply(reply) {
     if (typeof reply === "string") return { icon: "chat", text: reply };
-    return { icon: reply.icon || "chat", text: reply.text || "" };
+    return {
+      icon: reply.icon || "chat",
+      text: reply.text || "",
+      action: reply.action || "",
+      kind: reply.kind || "",
+    };
   }
 
   function quickReplies() {
@@ -358,6 +420,22 @@
     .lzd-bot .lzd-bubble-msg { background:rgba(255,255,255,.08); color:#f8fafc; border:1px solid rgba(255,255,255,.08); border-bottom-left-radius:5px; }
     .lzd-user .lzd-bubble-msg { background:var(--lzd-accent); color:#fff; border-bottom-right-radius:5px; font-weight:750; }
     .lzd-sources { font-size:11px; color:rgba(226,232,240,.62); margin-top:7px; padding-top:7px; border-top:1px solid rgba(255,255,255,.12); }
+    .lzd-contact-form {
+      width:min(100%, 330px); margin:0 0 14px; padding:13px; border-radius:14px;
+      background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); color:#f8fafc;
+    }
+    .lzd-contact-form h3 { margin:0 0 6px; font-size:16px; line-height:1.25; color:#fff; }
+    .lzd-contact-form p { margin:0 0 11px; color:rgba(226,232,240,.76); font-size:12px; line-height:1.35; }
+    .lzd-contact-form label { display:block; margin:9px 0 4px; color:#dbeafe; font-size:12px; font-weight:800; }
+    .lzd-contact-form input, .lzd-contact-form textarea {
+      width:100%; border:1px solid rgba(255,255,255,.14); border-radius:8px; background:#0d2c33;
+      color:#fff; outline:none; padding:9px 10px; font-size:14px; line-height:1.35;
+    }
+    .lzd-contact-form textarea { min-height:82px; resize:vertical; }
+    .lzd-contact-form input:focus, .lzd-contact-form textarea:focus { border-color:var(--lzd-accent); }
+    .lzd-contact-form button { width:100%; margin-top:12px; border:0; border-radius:999px; padding:10px 12px; background:var(--lzd-accent); color:#fff; font-weight:900; cursor:pointer; }
+    .lzd-contact-form button:disabled { opacity:.7; cursor:default; }
+    .lzd-form-error { display:none; margin-top:8px; color:#fecaca; font-size:12px; line-height:1.35; }
     .lzd-typing { display:inline-flex; gap:4px; align-items:center; padding:3px 0; }
     .lzd-typing span { width:7px; height:7px; background:#cbd5e1; border-radius:50%; animation:lzd-blink 1.2s infinite; }
     .lzd-typing span:nth-child(2){ animation-delay:.2s; } .lzd-typing span:nth-child(3){ animation-delay:.4s; }
@@ -432,7 +510,7 @@
 
   function buildQuickReplies() {
     return quickReplies().map(function (reply) {
-      return '<button class="lzd-chip" type="button" data-text="' + esc(reply.text) + '">' + icon(reply.icon) + '<span>' + esc(reply.text) + '</span></button>';
+      return '<button class="lzd-chip" type="button" data-text="' + esc(reply.text) + '" data-action="' + esc(reply.action) + '" data-kind="' + esc(reply.kind) + '">' + icon(reply.icon) + '<span>' + esc(reply.text) + '</span></button>';
     }).join("");
   }
 
@@ -446,6 +524,7 @@
           <div id="lzd24-header-title">${esc(CONFIG.botName)}</div>
           <div class="lzd-lang"><button type="button" data-lang="de">DE</button><button type="button" data-lang="en">EN</button></div>
           <button id="lzd24-history" class="lzd-icon-btn" type="button" aria-label="${I18N[lang].history}">${icon("history")}</button>
+          <button id="lzd24-whatsapp" class="lzd-icon-btn" type="button" aria-label="${I18N[lang].whatsapp}">${icon("whatsapp")}</button>
           <button id="lzd24-phone" class="lzd-icon-btn" type="button" aria-label="${I18N[lang].callNow}">${icon("phone")}</button>
           <button id="lzd24-close" class="lzd-icon-btn" type="button" aria-label="${I18N[lang].close}">${icon("close")}</button>
         </div>
@@ -512,6 +591,7 @@
     els.close = root.querySelector("#lzd24-close");
     els.menu = root.querySelector("#lzd24-menu");
     els.history = root.querySelector("#lzd24-history");
+    els.whatsapp = root.querySelector("#lzd24-whatsapp");
     els.phone = root.querySelector("#lzd24-phone");
     els.msgs = root.querySelector("#lzd24-msgs");
     els.input = root.querySelector("#lzd24-input");
@@ -547,7 +627,11 @@
     els.msgs.querySelectorAll(".lzd-chip").forEach(function (button) {
       button.addEventListener("click", function () {
         showView("chat");
-        sendUserText(button.getAttribute("data-text") || "");
+        if (button.getAttribute("data-action") === "contact") {
+          openContactForm(button.getAttribute("data-kind") || "kontakt", button.getAttribute("data-text") || "");
+        } else {
+          sendUserText(button.getAttribute("data-text") || "");
+        }
       });
     });
   }
@@ -584,13 +668,17 @@
     els.decline.addEventListener("click", dismissGreetingPopup);
     els.menu.addEventListener("click", function () { showView("history"); });
     els.history.addEventListener("click", function () { showView("history"); });
+    els.whatsapp.addEventListener("click", function () {
+      var url = whatsappLink();
+      if (url) window.open(url, "_blank", "noopener");
+    });
     els.phone.addEventListener("click", function () { showView("call"); });
     els.callCancel.addEventListener("click", function () { showView("chat"); });
     els.backBtns.forEach(function (button) {
       button.addEventListener("click", function () { showView("chat"); });
     });
     els.plus.addEventListener("click", function () {
-      window.location.href = "mailto:" + CONFIG.supportEmail;
+      openContactForm("kontakt", I18N[lang].contactKinds.kontakt);
     });
     els.send.addEventListener("click", onSend);
     els.input.addEventListener("keydown", function (e) {
@@ -625,6 +713,8 @@
     els.callText.textContent = t.callText;
     els.callAction.textContent = t.callButton;
     els.callCancel.textContent = t.cancel;
+    els.whatsapp.setAttribute("aria-label", t.whatsapp);
+    els.whatsapp.style.display = whatsappLink() ? "grid" : "none";
     els.historyEmpty.textContent = t.noHistory;
     els.backBtns.forEach(function (button) { button.querySelector("span").textContent = t.back; });
     els.langBtns.forEach(function (b) { b.classList.toggle("lzd-active", b.getAttribute("data-lang") === lang); });
@@ -696,6 +786,90 @@
 
   function scrollBottom() {
     els.msgs.scrollTop = els.msgs.scrollHeight;
+  }
+
+  function removeContactForms() {
+    els.msgs.querySelectorAll(".lzd-contact-form-wrap").forEach(function (node) {
+      node.remove();
+    });
+  }
+
+  function openContactForm(kind, label) {
+    kind = /^(angebot|reklamation|kontakt)$/.test(kind) ? kind : "kontakt";
+    removeContactForms();
+    if (label) addMessage("user", label);
+    var t = I18N[lang];
+    var wrap = document.createElement("div");
+    wrap.className = "lzd-msg lzd-bot lzd-contact-form-wrap";
+    wrap.innerHTML = `
+      <form class="lzd-contact-form">
+        <h3>${esc(t.contactKinds[kind] || t.contactKinds.kontakt)}</h3>
+        <p>${esc(t.contactIntro)}</p>
+        <label>${esc(t.nameLabel)}</label>
+        <input name="name" autocomplete="name" required maxlength="120" />
+        <label>${esc(t.emailLabel)}</label>
+        <input name="email" type="email" autocomplete="email" required maxlength="254" />
+        <label>${esc(t.productNumberLabel)}</label>
+        <input name="productNumber" maxlength="80" />
+        <label>${esc(t.messageLabel)}</label>
+        <textarea name="message" required maxlength="3000"></textarea>
+        <button type="submit">${esc(t.submitContact)}</button>
+        <div class="lzd-form-error"></div>
+      </form>
+    `;
+    els.msgs.appendChild(wrap);
+    var form = wrap.querySelector("form");
+    var error = wrap.querySelector(".lzd-form-error");
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      submitContactForm(form, kind, error);
+    });
+    scrollBottom();
+    setTimeout(function () {
+      var first = form.querySelector("input");
+      if (first) first.focus();
+    }, 60);
+  }
+
+  function isValidEmail(email) {
+    return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+  }
+
+  async function submitContactForm(form, kind, error) {
+    var t = I18N[lang];
+    var payload = {
+      kind: kind,
+      name: (form.elements.name.value || "").trim(),
+      email: (form.elements.email.value || "").trim(),
+      message: (form.elements.message.value || "").trim(),
+    };
+    var productNumber = (form.elements.productNumber.value || "").trim();
+    if (productNumber) payload.productNumber = productNumber;
+    if (!isValidEmail(payload.email)) {
+      error.textContent = t.invalidEmail;
+      error.style.display = "block";
+      return;
+    }
+    var submit = form.querySelector("button[type='submit']");
+    submit.disabled = true;
+    error.style.display = "none";
+    try {
+      var resp = await fetch(contactEndpoint(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!resp.ok) throw new Error("HTTP " + resp.status);
+      var data = await resp.json().catch(function () { return {}; });
+      var parent = form.closest(".lzd-contact-form-wrap");
+      if (parent) parent.remove();
+      addMessage("bot", data.message || t.contactSuccess);
+    } catch (_) {
+      error.textContent = t.contactError;
+      error.style.display = "block";
+      submit.disabled = false;
+    }
+    scrollBottom();
   }
 
   function onSend() {

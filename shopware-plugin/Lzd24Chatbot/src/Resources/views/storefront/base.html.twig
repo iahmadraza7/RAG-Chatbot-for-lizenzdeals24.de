@@ -20,6 +20,8 @@
                 defaultLang: "{{ config('Lzd24Chatbot.config.defaultLang')|e('js') }}",
                 supportEmail: "{{ config('Lzd24Chatbot.config.supportEmail')|e('js') }}",
                 whatsappUrl: "{{ config('Lzd24Chatbot.config.whatsappUrl')|e('js') }}",
+                whatsappNumber: "{{ config('Lzd24Chatbot.config.whatsappNumber')|e('js') }}",
+                contactEndpoint: "{{ config('Lzd24Chatbot.config.contactEndpoint')|e('js') }}",
                 telUrl: "{{ config('Lzd24Chatbot.config.telUrl')|e('js') }}",
                 contactUrl: "{{ config('Lzd24Chatbot.config.contactUrl')|e('js') }}",
                 offsetBottom: {{ config('Lzd24Chatbot.config.offsetBottom')|default(45) }},
@@ -28,6 +30,6 @@
                 greetingEN: "{{ config('Lzd24Chatbot.config.greetingEN')|e('js') }}"
             });
         </script>
-        <script src="{{ asset('bundles/lzd24chatbot/widget/widget.js') }}?v=2.1.0" defer></script>
+        <script src="{{ asset('bundles/lzd24chatbot/widget/widget.js') }}?v=2.2.0" defer></script>
     {% endif %}
 {% endblock %}
