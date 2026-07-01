@@ -33,7 +33,7 @@
         { icon: "receipt", text: "Help with invoice" },
         { icon: "chat", text: "Consultation" },
       ],
-      offsetBottom: 72,
+      offsetBottom: 90,
       offsetRight: 24,
       supportEmail: "support@lizenzdeals24.de",
       contactUrl: "/kontakt",
@@ -62,9 +62,10 @@
   var activeController = null;
   var conversation = loadConversation();
   var configuredBottom = Number(CONFIG.offsetBottom);
-  var desktopBottom = Number.isFinite(configuredBottom) && configuredBottom > 0 ? configuredBottom : 72;
+  var desktopBottom = Math.max(Number.isFinite(configuredBottom) && configuredBottom > 0 ? configuredBottom : 0, 90);
   var configuredRight = Number(CONFIG.offsetRight);
   var desktopRight = Number.isFinite(configuredRight) && configuredRight > 0 ? configuredRight : 24;
+  var mobileBottom = Math.max(desktopBottom, 90);
 
   var I18N = {
     de: {
@@ -337,7 +338,7 @@
     #lzd24-sendbtn:disabled { opacity:.6; cursor:default; }
 
     @media (max-width: 480px) {
-      #lzd24-root { right: 12px; bottom: max(22px, calc(env(safe-area-inset-bottom) + 22px)); }
+      #lzd24-root { right: 12px; bottom: max(${mobileBottom}px, calc(env(safe-area-inset-bottom) + ${mobileBottom}px)); }
       #lzd24-panel {
         position:fixed; left:8px; right:8px; top:max(8px, env(safe-area-inset-top)); bottom:max(8px, env(safe-area-inset-bottom));
         width:auto; height:auto; max-width:none; max-height:none; border-radius:16px;
