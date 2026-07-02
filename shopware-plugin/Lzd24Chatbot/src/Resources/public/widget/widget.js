@@ -417,6 +417,8 @@
     .lzd-msg.lzd-bot { justify-content:flex-start; }
     .lzd-msg.lzd-user { justify-content:flex-end; }
     .lzd-bubble-msg { max-width:84%; padding:10px 13px; border-radius:14px; font-size:15px; line-height:1.42; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .lzd-bubble-msg a { color:#bfdbfe; text-decoration:underline; font-weight:800; }
+    .lzd-bubble-msg a:hover { color:#fff; }
     .lzd-bot .lzd-bubble-msg { background:rgba(255,255,255,.08); color:#f8fafc; border:1px solid rgba(255,255,255,.08); border-bottom-left-radius:5px; }
     .lzd-user .lzd-bubble-msg { background:var(--lzd-accent); color:#fff; border-bottom-right-radius:5px; font-weight:750; }
     .lzd-sources { font-size:11px; color:rgba(226,232,240,.62); margin-top:7px; padding-top:7px; border-top:1px solid rgba(255,255,255,.12); }
@@ -752,6 +754,7 @@
     bubble.className = "lzd-bubble-msg";
     bubble.textContent = text || "";
     wrap.appendChild(bubble);
+    if (who === "bot") linkifyBubble(bubble);
     if (CONFIG.showSources && sources && sources.length) addSources(bubble, sources);
     els.msgs.appendChild(wrap);
     if (options.persist !== false) persistMessage(who, text || "", bubble);
@@ -768,6 +771,19 @@
     s.className = "lzd-sources";
     s.textContent = I18N[lang].sources + visible.join(" · ") + more;
     bubble.appendChild(s);
+  }
+
+  function linkifyBubble(bubble) {
+    var text = bubble.textContent || "";
+    var urlRegex = /https?:\/\/[^\s<>"']+/g;
+    bubble.innerHTML = esc(text).replace(urlRegex, function (url) {
+      var trailing = "";
+      while (/[),.;!?]$/.test(url)) {
+        trailing = url.slice(-1) + trailing;
+        url = url.slice(0, -1);
+      }
+      return '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(url) + '</a>' + esc(trailing);
+    });
   }
 
   function showTyping() {
@@ -975,6 +991,7 @@
     drain();
 
     hideTyping();
+    if (botBubble) linkifyBubble(botBubble);
     if (botBubble && sources.length && CONFIG.showSources) addSources(botBubble, sources);
     setBusy(false);
     activeController = null;

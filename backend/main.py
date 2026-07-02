@@ -67,7 +67,8 @@ SYSTEM_PROMPT = (
     "product name, price, Artikelnummer/article number, and product link when "
     "those fields are present in CONTEXT. Answer confidently from CONTEXT; only "
     "say you do not have the information when CONTEXT genuinely does not "
-    "contain it. "
+    "contain it. Never translate, localize, shorten, or rewrite URLs. Copy "
+    "every URL exactly as it appears after 'Link:' in CONTEXT. "
     "NEVER ask for or process personal data like "
     "names, emails, order numbers, or payment info in this chat."
 )
@@ -109,13 +110,13 @@ _CONTACT_INTENT = {
     "de": re.compile(
         r"\b(angebotsanfrage|angebot\s+(anfragen|bekommen|erhalten)|"
         r"kostenvoranschlag|reklamation|beschwerde|"
-        r"retoure|rückgabe|widerruf|support\s+kontaktieren|kontakt\s+aufnehmen|"
+        r"support\s+kontaktieren|kontakt\s+aufnehmen|"
         r"lizenzschlüssel\s+nicht\s+erhalten)\b",
         re.IGNORECASE,
     ),
     "en": re.compile(
         r"\b(quote\s+request|request\s+a\s+quote|get\s+a\s+quote|"
-        r"complaint|return|refund|contact\s+support|contact\s+request|"
+        r"complaint|contact\s+support|contact\s+request|"
         r"license\s+key\s+not\s+received)\b",
         re.IGNORECASE,
     ),
@@ -160,23 +161,26 @@ _SHORT_NON_PRODUCT = re.compile(r"^[a-zäöüß\s'.!?-]{1,12}$", re.IGNORECASE)
 _SUPPORT_PATTERNS = {
     "en": [
         ("key_not_received", r"license\s+key\s+not\s+received|key\s+not\s+received|not\s+received"),
-        ("key_not_working", r"license\s+key\s+does\s+not\s+work|key\s+does\s+not\s+work|activation|doesn'?t\s+work"),
+        ("key_not_working", r"license\s+key\s+does\s+not\s+work|key\s+does\s+not\s+work|activation|activate|activating|doesn'?t\s+work"),
         ("installation", r"help\s+with\s+installation|installation|install"),
-        ("invoice", r"help\s+with\s+invoice|invoice|billing|rechnung"),
+        ("invoice", r"help\s+with\s+invoice|invoice|bill|billing|rechnung"),
         ("consultation", r"consultation|license\s+advice|quote\s+request|request\s+a\s+quote|get\s+a\s+quote"),
-        ("complaint", r"complaint|return|refund|contact\s+support|contact\s+request"),
+        ("policy", r"cancel|cancellation|withdraw|withdrawal|revocation|digital\s+(goods|product|ware)|return|refund"),
+        ("complaint", r"complaint|contact\s+support|contact\s+request"),
     ],
     "de": [
         ("key_not_received", r"lizenzschlüssel\s+nicht\s+erhalten|lizenzschluessel\s+nicht\s+erhalten|key\s+nicht\s+erhalten|nicht\s+erhalten"),
-        ("key_not_working", r"lizenzschlüssel\s+funktioniert\s+nicht|lizenzschluessel\s+funktioniert\s+nicht|aktivierung|funktioniert\s+nicht"),
+        ("key_not_working", r"lizenzschlüssel\s+funktioniert\s+nicht|lizenzschluessel\s+funktioniert\s+nicht|aktivierung|aktivier\w*|funktioniert\s+nicht"),
         ("installation", r"hilfe\s+bei\s+installation|installation|installieren"),
         ("invoice", r"hilfe\s+mit\s+rechnung|rechnung|zahlung"),
         ("consultation", r"beratung|lizenzberatung|angebotsanfrage|angebot\s+(anfragen|bekommen|erhalten)|kostenvoranschlag"),
-        ("complaint", r"reklamation|beschwerde|retoure|rückgabe|widerruf|support\s+kontaktieren|kontakt\s+aufnehmen"),
+        ("policy", r"widerruf|stornieren|kündigen|kuendigen|retoure|rückgabe|rueckgabe|rückerstattung|rueckerstattung|digitale\s+ware"),
+        ("complaint", r"reklamation|beschwerde|support\s+kontaktieren|kontakt\s+aufnehmen"),
     ],
 }
 
 _DIRECT_SUPPORT_INTENTS = {"key_not_received", "complaint"}
+_FAQ_PREFERRED_INTENTS = {"key_not_working", "installation", "invoice", "policy"}
 
 
 def support_intent(text: str, lang: str | None = None) -> str | None:
@@ -188,6 +192,13 @@ def support_intent(text: str, lang: str | None = None) -> str | None:
             if re.search(pattern, lowered, re.IGNORECASE):
                 return intent
     return None
+
+
+def whatsapp_support_link() -> str:
+    if config.WHATSAPP_URL:
+        return config.WHATSAPP_URL
+    number = re.sub(r"\D+", "", config.WHATSAPP_NUMBER or "")
+    return f"https://wa.me/{number}" if number else ""
 
 
 def contact_reply(lang: str, intent: str | None = None) -> str:
@@ -226,8 +237,9 @@ def contact_reply(lang: str, intent: str | None = None) -> str:
             f"For quote requests, complaints, or personal support cases, please contact "
             f"{config.SUPPORT_EMAIL} directly. Please do not enter personal data in this chat."
         )
-        if config.WHATSAPP_URL:
-            text += f" For urgent support, you can also use WhatsApp: {config.WHATSAPP_URL}"
+        wa_link = whatsapp_support_link()
+        if wa_link:
+            text += f" For urgent support, you can also use WhatsApp: {wa_link}"
         return text
 
     replies = {
@@ -264,8 +276,9 @@ def contact_reply(lang: str, intent: str | None = None) -> str:
         f"Für Angebotsanfragen, Reklamationen oder persönliche Anliegen schreiben Sie bitte direkt an "
         f"{config.SUPPORT_EMAIL}. Bitte geben Sie hier im Chat keine persönlichen Daten ein."
     )
-    if config.WHATSAPP_URL:
-        text += f" Für dringenden Support können Sie auch WhatsApp nutzen: {config.WHATSAPP_URL}"
+    wa_link = whatsapp_support_link()
+    if wa_link:
+        text += f" Für dringenden Support können Sie auch WhatsApp nutzen: {wa_link}"
     return text
 
 
@@ -458,6 +471,150 @@ def catalog_fallback_answer(message: str, matches: list[dict], lang: str) -> str
     for item in items[:3]:
         lines.append(f"- {product_line(item, lang)}")
     return "\n".join(lines)
+
+
+def faq_matches(matches: list[dict]) -> list[dict]:
+    return [m for m in matches if (m.get("metadata") or {}).get("type") == "faq"]
+
+
+def _faq_title(match: dict) -> str:
+    metadata = match.get("metadata") or {}
+    return metadata.get("title") or metadata.get("name") or match.get("name") or "FAQ"
+
+
+def _faq_link(match: dict) -> str:
+    metadata = match.get("metadata") or {}
+    return metadata.get("url") or _content_field(match, "Link")
+
+
+def _faq_body(match: dict) -> str:
+    content = match.get("content") or ""
+    content = re.sub(r"^FAQ:\s*.+?\n", "", content, count=1)
+    content = re.sub(r"^Link:\s*.+?\n+", "", content, count=1)
+    content = re.sub(r"Zum Hauptinhalt springen.*?Menü schließen", "", content, flags=re.DOTALL)
+    content = re.sub(r"\s+", " ", content).strip()
+    return content.rstrip()
+
+
+def _query_terms(message: str | None) -> set[str]:
+    text = (message or "").lower()
+    terms = {w for w in re.findall(r"[a-zäöüß]{4,}", text)}
+    synonyms = {
+        "bill": {"rechnung", "invoice", "billing", "zahlung"},
+        "invoice": {"rechnung", "invoice", "billing", "zahlung"},
+        "activate": {"aktivierung", "aktivieren", "activation", "lizenzschlüssel", "license"},
+        "activation": {"aktivierung", "aktivieren", "activation", "lizenzschlüssel", "license"},
+        "install": {"installation", "installieren", "herunterladen", "download"},
+        "cancel": {"widerruf", "cancellation", "withdrawal", "rückgabe", "digital"},
+        "digital": {"digital", "widerruf", "rückgabe", "bereitstellung"},
+    }
+    for key, values in synonyms.items():
+        if key in text:
+            terms.update(values)
+    return terms
+
+
+def _relevant_faq_excerpt(match: dict, message: str | None) -> str:
+    body = _faq_body(match)
+    terms = _query_terms(message)
+    if not terms:
+        return body[:650].rstrip()
+    parts = [p.strip() for p in re.split(r"(?<=[.!?])\s+|(?=\b[A-ZÄÖÜ][A-Za-zÄÖÜäöüß ]{3,70}\?)", body) if p.strip()]
+    if not parts:
+        return body[:650].rstrip()
+    scored = []
+    for idx, part in enumerate(parts):
+        lowered = part.lower()
+        score = sum(1 for term in terms if term in lowered)
+        if score:
+            scored.append((score, idx))
+    if not scored:
+        return body[:650].rstrip()
+    _score, index = max(scored, key=lambda item: (item[0], -item[1]))
+    start = max(0, index - 1)
+    excerpt = " ".join(parts[start:index + 4])
+    return excerpt[:800].rstrip()
+
+
+def _faq_summary_for_intent(lang: str, intent: str | None) -> str | None:
+    if lang == "en":
+        summaries = {
+            "key_not_working": (
+                "For activation, install the correct product version first, open the license or "
+                "activation area, enter the license key exactly as received, confirm activation, "
+                "and check that the software shows as activated or licensed. For Windows, use "
+                "Settings > Update & Security > Activation > Change product key. Please do not "
+                "enter license keys or order data in this chat."
+            ),
+            "installation": (
+                "For installation, download the official installer or ISO for your product, run the "
+                "setup, then enter the license key in the activation or license area. If you are stuck, "
+                "tell me the product name and the installation step, without personal data or license keys."
+            ),
+            "invoice": (
+                "License data, download information, and the invoice are provided digitally after "
+                "successful payment, usually by email. Please also check your spam folder and customer "
+                "account. B2B customers receive a proper invoice with VAT shown."
+            ),
+            "policy": (
+                "For digital products, LizenzDeals24 provides the withdrawal and return policy in the "
+                "help pages. Consumers generally have a 14-day withdrawal period from contract conclusion; "
+                "special rules can apply once digital content has been provided with consent. Please use "
+                "the linked policy page for the exact legal wording."
+            ),
+        }
+        return summaries.get(intent)
+
+    summaries = {
+        "key_not_working": (
+            "Zur Aktivierung installieren Sie zuerst die passende Produktversion, öffnen den Lizenz- "
+            "oder Aktivierungsbereich, geben den Lizenzschlüssel exakt wie erhalten ein, bestätigen die "
+            "Aktivierung und prüfen anschließend den Status. Bei Windows: Einstellungen > Update & "
+            "Sicherheit > Aktivierung > Product Key ändern. Bitte geben Sie hier keine Lizenzschlüssel "
+            "oder Bestelldaten ein."
+        ),
+        "installation": (
+            "Für die Installation laden Sie den offiziellen Installer oder die ISO-Datei des Produkts "
+            "herunter, führen die Einrichtung aus und geben den Lizenzschlüssel danach im Lizenz- oder "
+            "Aktivierungsbereich ein. Wenn Sie an einem Schritt hängen, nennen Sie bitte Produktname "
+            "und Installationsschritt, aber keine persönlichen Daten oder Lizenzschlüssel."
+        ),
+        "invoice": (
+            "Lizenzdaten, Download-Informationen und Rechnung werden nach erfolgreichem Zahlungseingang "
+            "digital bereitgestellt, in der Regel per E-Mail. Bitte prüfen Sie auch den Spam-Ordner und "
+            "Ihr Kundenkonto. Für B2B-Kunden wird eine ordnungsgemäße Rechnung mit ausgewiesener MwSt. "
+            "bereitgestellt."
+        ),
+        "policy": (
+            "Für digitale Produkte gelten die Widerrufsbelehrung und Rückgaberegelung von LizenzDeals24. "
+            "Verbraucher haben grundsätzlich eine Widerrufsfrist von 14 Tagen ab Vertragsabschluss; bei "
+            "digital bereitgestellten Inhalten können besondere Regeln gelten. Die genaue rechtliche "
+            "Formulierung finden Sie auf der verlinkten Hilfeseite."
+        ),
+    }
+    return summaries.get(intent)
+
+
+def faq_fallback_answer(matches: list[dict], lang: str, message: str | None = None) -> str | None:
+    faqs = faq_matches(matches)
+    if not faqs:
+        return None
+    first = faqs[0]
+    title = _faq_title(first)
+    link = _faq_link(first)
+    intent = support_intent(message or "", lang)
+    body = _faq_summary_for_intent(lang, intent) or _relevant_faq_excerpt(first, message)
+    if lang == "en":
+        answer = f"I found this in the help pages: {body}"
+        if title:
+            answer += f"\nSource: {title}"
+    else:
+        answer = f"Ich habe diese Information in den Hilfeseiten gefunden: {body}"
+        if title:
+            answer += f"\nQuelle: {title}"
+    if link:
+        answer += f"\nLink: {link}"
+    return answer
 
 
 def _provider_error(resp: httpx.Response) -> str:
@@ -703,12 +860,18 @@ async def log_unanswered(question: str, lang: str, top_score: float | None) -> N
         pass  # logging must not affect the user-facing response
 
 
-async def prepare_context(message: str, lang: str) -> tuple[str | None, list[dict], float | None]:
+async def prepare_context(message: str, lang: str, prefer_faq: bool = False) -> tuple[str | None, list[dict], float | None]:
     """Embed and retrieve with the same anti-hallucination gate used by /chat."""
     embedding = await embed_query(message)
-    matches = await search_products(embedding, config.TOP_K)
+    match_count = max(config.TOP_K, 20) if prefer_faq else config.TOP_K
+    matches = await search_products(embedding, match_count)
     top_score = matches[0]["similarity"] if matches else None
     good = [m for m in matches if m.get("similarity", 0) >= config.EFFECTIVE_MIN_SIMILARITY]
+    if prefer_faq:
+        faq_good = [m for m in good if (m.get("metadata") or {}).get("type") == "faq"]
+        product_good = [m for m in good if (m.get("metadata") or {}).get("type") != "faq"]
+        if faq_good:
+            good = (faq_good[:config.TOP_K] + product_good[:2])[: max(config.TOP_K, 7)]
     if not good:
         await log_unanswered(message, lang, top_score)
         return None, [], top_score
@@ -825,6 +988,7 @@ async def chat(req: ChatRequest) -> ChatResponse:
     intent = support_intent(message, lang)
     if is_contact_intent(message, lang):
         return ChatResponse(answer=contact_reply(lang, intent), sources=[])
+    prefer_faq = intent in _FAQ_PREFERRED_INTENTS
 
     if is_obvious_out_of_scope(message):
         return ChatResponse(answer=NO_CONTEXT[lang], sources=[])
@@ -834,7 +998,7 @@ async def chat(req: ChatRequest) -> ChatResponse:
 
     # 1. Embed + retrieve.
     try:
-        context, good, _top_score = await prepare_context(message, lang)
+        context, good, _top_score = await prepare_context(message, lang, prefer_faq=prefer_faq)
     except RuntimeError:
         return ChatResponse(answer=FALLBACK[lang], sources=[])
     except httpx.HTTPStatusError as e:
@@ -846,27 +1010,43 @@ async def chat(req: ChatRequest) -> ChatResponse:
     if context is None:
         return ChatResponse(answer=NO_CONTEXT[lang], sources=[])
 
-    # 3. Price questions can be answered deterministically from catalog
+    # 3. FAQ/support questions should not wait on the LLM when the answer is
+    # already present in the approved help pages.
+    if prefer_faq:
+        faq_answer = faq_fallback_answer(good, lang, message)
+        if faq_answer:
+            return ChatResponse(answer=faq_answer, sources=build_sources(good))
+
+    # 4. Price questions can be answered deterministically from catalog
     # metadata. This is faster and safer than asking the LLM to rephrase.
     if _PRICE_INTENT.search(message) or _INFO_INTENT.search(message):
         direct_answer = catalog_fallback_answer(message, good, lang)
         if direct_answer:
             return ChatResponse(answer=direct_answer, sources=build_sources(good))
 
-    # 4. Build CONTEXT from the good matches and ask the LLM.
+    # 5. Build CONTEXT from the good matches and ask the LLM.
     try:
         answer = await generate_answer(message, context, lang)
     except RateLimited:
+        faq_answer = faq_fallback_answer(good, lang, message)
+        if faq_answer:
+            return ChatResponse(answer=faq_answer, sources=build_sources(good))
         fallback_answer = catalog_fallback_answer(message, good, lang)
         if fallback_answer:
             return ChatResponse(answer=fallback_answer, sources=build_sources(good))
         return ChatResponse(answer=FALLBACK[lang], sources=[])
     except RuntimeError:
+        faq_answer = faq_fallback_answer(good, lang, message)
+        if faq_answer:
+            return ChatResponse(answer=faq_answer, sources=build_sources(good))
         fallback_answer = catalog_fallback_answer(message, good, lang)
         if fallback_answer:
             return ChatResponse(answer=fallback_answer, sources=build_sources(good))
         return ChatResponse(answer=FALLBACK[lang], sources=[])
     except httpx.HTTPError:
+        faq_answer = faq_fallback_answer(good, lang, message)
+        if faq_answer:
+            return ChatResponse(answer=faq_answer, sources=build_sources(good))
         fallback_answer = catalog_fallback_answer(message, good, lang)
         if fallback_answer:
             return ChatResponse(answer=fallback_answer, sources=build_sources(good))
@@ -891,6 +1071,7 @@ async def chat_stream(req: ChatRequest) -> StreamingResponse:
             yield sse("answer", {"answer": contact_reply(lang, intent), "sources": []})
             yield sse("done", {})
             return
+        prefer_faq = intent in _FAQ_PREFERRED_INTENTS
 
         if is_obvious_out_of_scope(message):
             yield sse("answer", {"answer": NO_CONTEXT[lang], "sources": []})
@@ -903,7 +1084,7 @@ async def chat_stream(req: ChatRequest) -> StreamingResponse:
             return
 
         try:
-            context, good, _top_score = await prepare_context(message, lang)
+            context, good, _top_score = await prepare_context(message, lang, prefer_faq=prefer_faq)
         except (RuntimeError, httpx.HTTPStatusError):
             yield sse("error", {"answer": FALLBACK[lang], "sources": []})
             yield sse("done", {})
@@ -915,6 +1096,15 @@ async def chat_stream(req: ChatRequest) -> StreamingResponse:
             return
 
         sources = [s.model_dump() for s in build_sources(good)]
+
+        if prefer_faq:
+            faq_answer = faq_fallback_answer(good, lang, message)
+            if faq_answer:
+                for chunk in token_chunks(faq_answer):
+                    yield sse("token", {"text": chunk})
+                yield sse("sources", {"sources": sources})
+                yield sse("done", {})
+                return
 
         if _PRICE_INTENT.search(message) or _INFO_INTENT.search(message):
             direct_answer = catalog_fallback_answer(message, good, lang)
@@ -935,6 +1125,13 @@ async def chat_stream(req: ChatRequest) -> StreamingResponse:
             sent_token = False
             async with _client.stream("POST", url, json=payload, timeout=60.0) as resp:
                 if resp.status_code == 429:
+                    faq_answer = faq_fallback_answer(good, lang, message)
+                    if faq_answer:
+                        for chunk in token_chunks(faq_answer):
+                            yield sse("token", {"text": chunk})
+                        yield sse("sources", {"sources": sources})
+                        yield sse("done", {})
+                        return
                     fallback_answer = catalog_fallback_answer(message, good, lang)
                     if fallback_answer:
                         for chunk in token_chunks(fallback_answer):
@@ -945,6 +1142,13 @@ async def chat_stream(req: ChatRequest) -> StreamingResponse:
                     yield sse("done", {})
                     return
                 if resp.status_code >= 400:
+                    faq_answer = faq_fallback_answer(good, lang, message)
+                    if faq_answer:
+                        for chunk in token_chunks(faq_answer):
+                            yield sse("token", {"text": chunk})
+                        yield sse("sources", {"sources": sources})
+                        yield sse("done", {})
+                        return
                     fallback_answer = catalog_fallback_answer(message, good, lang)
                     if fallback_answer:
                         for chunk in token_chunks(fallback_answer):
@@ -978,6 +1182,11 @@ async def chat_stream(req: ChatRequest) -> StreamingResponse:
             if sent_token:
                 yield sse("sources", {"sources": sources})
             else:
+                faq_answer = faq_fallback_answer(good, lang, message)
+                if faq_answer:
+                    yield sse("answer", {"answer": faq_answer, "sources": sources})
+                    yield sse("done", {})
+                    return
                 fallback_answer = catalog_fallback_answer(message, good, lang)
                 if fallback_answer:
                     yield sse("answer", {"answer": fallback_answer, "sources": sources})
@@ -985,6 +1194,11 @@ async def chat_stream(req: ChatRequest) -> StreamingResponse:
                     yield sse("answer", {"answer": NO_CONTEXT[lang], "sources": []})
             yield sse("done", {})
         except httpx.HTTPError:
+            faq_answer = faq_fallback_answer(good, lang, message)
+            if faq_answer:
+                yield sse("answer", {"answer": faq_answer, "sources": sources})
+                yield sse("done", {})
+                return
             fallback_answer = catalog_fallback_answer(message, good, lang)
             if fallback_answer:
                 yield sse("answer", {"answer": fallback_answer, "sources": sources})
